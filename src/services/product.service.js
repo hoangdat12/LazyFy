@@ -3,6 +3,16 @@ import {
   BadRequestError,
   InternalServerError,
 } from "../core/error.response.js";
+import {
+  findAllDraftForShop,
+  findAllPublishForShop,
+  publishProduct,
+  unPublishProduct,
+  searchProductByUser,
+  findAllProductWithPagination,
+  getDetailProduct,
+  updateProductOfShop,
+} from "../models/repositories/product.repo.js";
 
 // A factory class to create different types of products
 class ProductFactory {
@@ -31,6 +41,74 @@ class ProductFactory {
   //       throw new BadRequestError("Type not found!");
   //   }
   // }
+
+  static async findAllDraftForShop({ product_shop, limit = 50, skip = 0 }) {
+    const query = {
+      product_shop,
+      isDraft: true,
+    };
+    return await findAllDraftForShop({ query, limit, skip });
+  }
+
+  static async findAllPublishForShop({ product_shop, limit = 50, skip = 0 }) {
+    const query = {
+      product_shop,
+      isDraft: false,
+      isPublished: true,
+    };
+    return await findAllPublishForShop({ query, limit, skip });
+  }
+
+  static async publishProduct({ product_shop, productId }) {
+    const query = {
+      product_shop,
+      _id: productId,
+    };
+    return await publishProduct({ query });
+  }
+
+  static async unPublishProduct({ product_shop, productId }) {
+    const query = {
+      product_shop,
+      _id: productId,
+    };
+    return await unPublishProduct({ query });
+  }
+
+  static async searchProductByUser({ keyword, limit = 50 }) {
+    const keywordRegex = new RegExp(keyword);
+    return await searchProductByUser({ keyword: keywordRegex, limit });
+  }
+
+  static async findAllProductWithPagination({
+    limit = 50,
+    page = 1,
+    sort = "ctime",
+    filter = { isPublished: true, isDraft: false },
+    select = [
+      "product_name",
+      "product_thumb",
+      "product_price",
+      "product_quantity",
+      "product_shop",
+    ],
+  }) {
+    return await findAllProductWithPagination({
+      limit,
+      page,
+      sort,
+      filter,
+      select,
+    });
+  }
+
+  static async getDetailProduct({ productId, unSelect = [] }) {
+    return await getDetailProduct({ productId, unSelect });
+  }
+
+  static async updateProductOfShop({ productId, product_shop, updated }) {
+    return await updateProductOfShop({ product_shop, productId, updated });
+  }
 }
 
 // A base class for all products

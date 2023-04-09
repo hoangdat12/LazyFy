@@ -15,6 +15,7 @@ class ShopService {
     }
     const newShop = await createShop({
       payload: {
+        _id: userId,
         owner: userId,
         ...payload,
       },

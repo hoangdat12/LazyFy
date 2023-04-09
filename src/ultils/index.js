@@ -4,4 +4,12 @@ const getInforData = ({ fields = [], objects = {} }) => {
   return _.pick(objects, fields);
 };
 
-export { getInforData };
+const getSelectFromArray = (select = []) => {
+  return Object.fromEntries(select.map((el) => [el, 1]));
+};
+
+const getUnSelectFromArray = (unSelect = []) => {
+  return Object.fromEntries(unSelect.map((el) => [el, 0]));
+};
+
+export { getInforData, getSelectFromArray, getUnSelectFromArray };

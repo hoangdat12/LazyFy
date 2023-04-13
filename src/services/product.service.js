@@ -11,8 +11,13 @@ import {
   searchProductByUser,
   findAllProductWithPagination,
   getDetailProduct,
+  updateProductOfShopForModelProduct,
   updateProductOfShop,
 } from "../models/repositories/product.repo.js";
+import {
+  UpdateNestedObjectParse,
+  removeNullOrUndefinedFromRequest,
+} from "../ultils/index.js";
 
 // A factory class to create different types of products
 class ProductFactory {
@@ -29,18 +34,6 @@ class ProductFactory {
     }
     return new productClass(payload).createProduct();
   }
-
-  // static async createProduct({ type, payload }) {
-  //   // Checking the type of product and creating a new instance of the appropriate class
-  //   switch (type) {
-  //     case "Electronic":
-  //       return new Electronic(payload).createProduct();
-  //     case "Clothing":
-  //       return new Clothing(payload).createProduct();
-  //     default:
-  //       throw new BadRequestError("Type not found!");
-  //   }
-  // }
 
   static async findAllDraftForShop({ product_shop, limit = 50, skip = 0 }) {
     const query = {
@@ -106,8 +99,12 @@ class ProductFactory {
     return await getDetailProduct({ productId, unSelect });
   }
 
-  static async updateProductOfShop({ productId, product_shop, updated }) {
-    return await updateProductOfShop({ product_shop, productId, updated });
+  static async updateProduct({ type, productId, payload }) {
+    const productClass = this.productRegister[type];
+    if (!productClass) {
+      throw new BadRequestError("Type not found!");
+    }
+    return new productClass(payload).updateProductOfShop(productId);
   }
 }
 
@@ -138,6 +135,14 @@ class Product {
   async createProduct(productId) {
     return await _Product.create({ _id: productId, ...this });
   }
+
+  async updateProductOfShop(productId, payload) {
+    return await updateProductOfShopForModelProduct({
+      productShop: payload.product_shop,
+      productId,
+      updated: payload,
+    });
+  }
 }
 
 // CLOTHING
@@ -159,6 +164,24 @@ class Clothing extends Product {
       return newProduct;
     }
   }
+
+  async updateProductOfShop(productId) {
+    // Remove attribute null or undifined
+    const objectParams = removeNullOrUndefinedFromRequest(this);
+    // Check Product update
+    const updateProduct = await super.updateProductOfShop(
+      productId,
+      UpdateNestedObjectParse(objectParams)
+    );
+    if (objectParams.product_attributes) {
+      await updateProductOfShop({
+        productId,
+        updated: UpdateNestedObjectParse(objectParams.product_attributes),
+        model: _Clothing,
+      });
+    }
+    return updateProduct;
+  }
 }
 
 // ELECTRONIC
@@ -179,6 +202,25 @@ class Electronic extends Product {
     } else {
       return newProduct;
     }
+  }
+
+  async updateProductOfShop(productId) {
+    // Remove attribute null or undifined
+    const objectParams = removeNullOrUndefinedFromRequest(this);
+    // Check Product update
+    const updateProduct = await super.updateProductOfShop(
+      productId,
+      objectParams
+    );
+    if (objectParams.product_attributes) {
+      await updateProductOfShop({
+        productShop: objectParams.product_shop,
+        productId,
+        updated: objectParams,
+        model: _Electronic,
+      });
+    }
+    return updateProduct;
   }
 }
 

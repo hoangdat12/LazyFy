@@ -4,6 +4,7 @@ import {
   getSelectFromArray,
   getUnSelectFromArray,
 } from "../../ultils/index.js";
+import { Types } from "mongoose";
 
 const findAllDraftForShop = async ({ query, limit, skip }) => {
   return await findProductWithQuery({ query, limit, skip });
@@ -106,16 +107,34 @@ const getDetailProduct = async ({ productId, unSelect }) => {
   return product;
 };
 
-const updateProductOfShop = async ({ product_shop, productId, updated }) => {
-  const productExist = await _Product.findOne({ _id: productId }).lean();
-  if (productExist.product_shop !== product_shop) {
-    throw new BadRequestError("You not permission!");
-  }
+const updateProductOfShopForModelProduct = async ({
+  productShop,
+  productId,
+  updated,
+}) => {
+  console.log(updated);
   const productUpdate = await _Product
     .findOneAndUpdate(
       {
         _id: productId,
-        product_shop,
+        product_shop: productShop,
+      },
+      updated,
+      {
+        new: true,
+      }
+    )
+    .lean();
+  if (!productUpdate) throw new NotFoundError("Product not found!");
+  return productUpdate;
+};
+
+const updateProductOfShop = async ({ productId, updated, model }) => {
+  console.log(updated);
+  const productUpdate = await model
+    .findOneAndUpdate(
+      {
+        _id: productId,
       },
       updated,
       {
@@ -146,5 +165,6 @@ export {
   searchProductByUser,
   findAllProductWithPagination,
   getDetailProduct,
+  updateProductOfShopForModelProduct,
   updateProductOfShop,
 };

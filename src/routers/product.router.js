@@ -28,6 +28,9 @@ router.post(
   "/publish/all",
   asyncHandler(ProductController.getAllPublishForShop)
 );
-router.post("/update", asyncHandler(ProductController.updateProductOfShop));
+router.patch(
+  "/:productId",
+  asyncHandler(ProductController.updateProductOfShop)
+);
 
 export default router;

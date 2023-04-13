@@ -144,15 +144,22 @@ class ProductController {
   };
 
   static updateProductOfShop = async (req, res, next) => {
-    const { productId, product_shop, updated } = req.body;
-    new OK(
-      "Updated product success!",
-      await ProductFactory.updateProductOfShop({
-        productId,
-        product_shop,
-        updated,
-      })
-    ).send(res);
+    try {
+      new OK(
+        "Updated product success!",
+        await ProductFactory.updateProduct({
+          type: req.body.product_type,
+          productId: req.params.productId,
+          payload: {
+            product_shop: req.user.id,
+            ...req.body,
+          },
+        })
+      ).send(res);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
   };
 }
 

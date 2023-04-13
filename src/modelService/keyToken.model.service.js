@@ -1,5 +1,3 @@
-import { Types } from "mongoose";
-
 import _KeyToken from "../models/keyToken.model.js";
 
 const findByUserId = ({ userId }) => {

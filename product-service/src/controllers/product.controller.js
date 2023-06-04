@@ -1,11 +1,13 @@
-import { OK, CREATED } from "../core/success.response.js";
-import ProductFactory from "../services/product.service.js";
+import { OK, CREATED } from '../core/success.response.js';
+import ProductFactory from '../services/product.service.js';
 
 class ProductController {
   static createNewProduct = async (req, res, next) => {
     try {
+      const user = req.headers.user;
       const type = req.body.product_type;
-      const product_shop = req.user.id;
+
+      const product_shop = user.id;
       const product = await ProductFactory.createProduct({
         type,
         payload: {
@@ -13,7 +15,7 @@ class ProductController {
           ...req.body,
         },
       });
-      new CREATED("Create Product Success!", product).send(res);
+      new CREATED('Create Product Success!', product).send(res);
     } catch (err) {
       next(err);
     }
@@ -30,7 +32,7 @@ class ProductController {
   static getAllDraftForShop = async (req, res, next) => {
     try {
       new OK(
-        "Get list Draft success!",
+        'Get list Draft success!',
         await ProductFactory.findAllDraftForShop({
           product_shop: req.user.id,
         })
@@ -44,7 +46,7 @@ class ProductController {
   static publishProductForShop = async (req, res, next) => {
     try {
       new OK(
-        "Publish product success!",
+        'Publish product success!',
         await ProductFactory.publishProduct({
           product_shop: req.user.id,
           productId: req.body.productId,
@@ -59,7 +61,7 @@ class ProductController {
   static unPublishProductForShop = async (req, res, next) => {
     try {
       new OK(
-        "UnPublish product success!",
+        'UnPublish product success!',
         await ProductFactory.unPublishProduct({
           product_shop: req.user.id,
           productId: req.body.productId,
@@ -82,7 +84,7 @@ class ProductController {
   static getAllPublishForShop = async (req, res, next) => {
     try {
       new OK(
-        "Get List Publish success!",
+        'Get List Publish success!',
         await ProductFactory.findAllPublishForShop({
           product_shop: req.user.id,
         })
@@ -98,7 +100,7 @@ class ProductController {
       const { q } = req.query;
       const keyword = q.trim();
       new OK(
-        "List product for search!",
+        'List product for search!',
         await ProductFactory.searchProductByUser({
           keyword,
         })
@@ -123,7 +125,7 @@ class ProductController {
         limit,
         sortBy: sort,
       };
-      new OK("Get products success!", data).send(res);
+      new OK('Get products success!', data).send(res);
     } catch (err) {
       console.log(err);
       next(err);
@@ -134,7 +136,7 @@ class ProductController {
     try {
       const { productId } = req.params;
       new OK(
-        "Detail product",
+        'Detail product',
         await ProductFactory.getDetailProduct({ productId })
       ).send(res);
     } catch (err) {
@@ -146,7 +148,7 @@ class ProductController {
   static updateProductOfShop = async (req, res, next) => {
     try {
       new OK(
-        "Updated product success!",
+        'Updated product success!',
         await ProductFactory.updateProduct({
           type: req.body.product_type,
           productId: req.params.productId,

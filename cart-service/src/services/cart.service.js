@@ -1,5 +1,9 @@
-import { InternalServerError } from "../core/error.response.js";
-import _Cart from "../models/cart.model.js";
+import {
+  BadRequestError,
+  InternalServerError,
+} from '../core/error.response.js';
+import ClientGRPC from '../gRPC/client.gRPC.js';
+import _Cart from '../models/cart.model.js';
 
 /**
  * addToSet do not add new Item to array if item is exist in array
@@ -7,8 +11,10 @@ import _Cart from "../models/cart.model.js";
  */
 
 class CartService {
+  producer = new Producer('product_queue');
+
   async createCartOfUser({ userId, product }) {
-    const query = { cart_user_id: userId, cart_state: "active" };
+    const query = { cart_user_id: userId, cart_state: 'active' };
     const updateOrInsert = {
       $addToSet: {
         cart_products: product,
@@ -23,12 +29,12 @@ class CartService {
     const { productId, quantity } = product;
     const query = {
       cart_user_id: userId,
-      "cart_products.productId": productId,
-      state: "active",
+      'cart_products.productId': productId,
+      state: 'active',
     };
     const updateSet = {
       $inc: {
-        "cart_products.$.quantity": quantity,
+        'cart_products.$.quantity': quantity,
       },
     };
     const options = { new: true, upsert: true };
@@ -88,23 +94,25 @@ class CartService {
     ]
 
    */
-  static async addProductToCartV2({ userId, product }) {
+  static async addProductToCartV2({ shop_order_ids }) {
+    const clientGRPC = new ClientGRPC('product_queue');
     // Check product is exist or not
-
-    //
-    const { productId, quantity, old_quantity } =
-      shop_order_ids[0]?.item_products[0];
-
-    // Check product Exist
-
-    if (quantity === 0) {
-      // delete product from cart
-    }
-
-    return await CartService.updateQuantityOfProductInCart({
-      userId,
-      product: { productId, quantity: quantity - old_quantity },
+    let productIds = [];
+    shop_order_ids.map((order) => {
+      productIds.push(order?.item_products?.productId);
     });
+    const message = {
+      type: 'check',
+      data: productIds,
+    };
+    const res = await clientGRPC.fetchData({ message });
+    if (!res.isExist) {
+      const response = {
+        msg: 'Some product is not Exist!',
+        productIsNotExist: res.productIsNotExist,
+      };
+      return new BadRequestError(response);
+    }
   }
 }
 

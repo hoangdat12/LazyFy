@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cart;
+
+service Cart {
+  rpc checkProduct (ProductRequest) returns (ProductResponse) {}
+  rpc getString (Empty) returns (StringResponse) {}
+}
+
+message ProductRequest {
+  repeated string productIds = 1;
+}
+
+message Specs {
+  string size = 1;
+  string color = 2;
+}
+
+message Product {
+  string product_ratingAverage = 1;
+  repeated string product_variation = 2;
+  repeated string product_images = 3;
+  string id = 4;
+  string code = 5;
+  string name = 6;
+  string author = 7;
+  string description = 8;
+  repeated string type = 9;
+  string image_url = 10;
+  float price = 11;
+  bool active = 12;
+  int32 purchases = 13;
+  Specs specs = 14;
+}
+
+message ProductResponse {
+  bool isExist = 1;
+  repeated Product products = 2;
+}
+
+message Empty {}
+
+message StringResponse {
+  string msg = 1;
+}

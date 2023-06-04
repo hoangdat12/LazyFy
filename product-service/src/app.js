@@ -4,9 +4,11 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cors from 'cors';
 
-import instanceMongDB from './dbs/init.mongodb.js';
+import Database from './dbs/init.mongodb.js';
 import shopRoute from './routers/shop.router.js';
 import productRoute from './routers/product.router.js';
+import Consumer from './rabbitMQ/consummer.js';
+import ServerGRPC from './gRPC/server.gRPC.js';
 
 const app = express();
 
@@ -28,23 +30,19 @@ app.use(
 );
 
 // CONNECT
-instanceMongDB.connect('mongodb');
+Database.getInstance('mongodb');
 
-app.get('/api/v1/product/test', (req, res) => {
-  console.log(req.headers);
-  return res.json({ msg: 'test' }).status(200);
-});
+// RabbitMQ
+const consumer = new Consumer();
+await consumer.receivedMessage();
+
+// gRPC
+const serverGRPC = new ServerGRPC();
+serverGRPC.onServer();
 
 // ROUTES
-app.use('/api/v1/shop', shopRoute);
+app.use('/api/v1/product', shopRoute);
 app.use('/api/v1/product', productRoute);
-
-// HANDLE ERROR
-// app.use((req, res, next) => {
-//   const error = new Error("Not found!");
-//   error.status = 400;
-//   next(error);
-// });
 
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;

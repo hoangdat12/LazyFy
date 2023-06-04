@@ -3,8 +3,9 @@ import ShopService from '../services/shop.service.js';
 class ShopController {
   static register = async (req, res, next) => {
     try {
-      const user = req.headers('user');
+      const user = req.headers.user;
       const payload = req.body;
+      console.log('Req::: ', req.body);
       (await ShopService.register({ userId: user.id, payload })).send(res);
     } catch (err) {
       next(err);

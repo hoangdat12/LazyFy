@@ -1,6 +1,7 @@
 import { NotFoundError } from '../core/error.response.js';
 import { _Product } from '../models/product.model.js';
 import { getSelectFromArray, getUnSelectFromArray } from '../ultils/index.js';
+import { Types } from 'mongoose';
 
 const findAllDraftForShop = async ({ query, limit, skip }) => {
   return await findProductWithQuery({ query, limit, skip });
@@ -153,6 +154,33 @@ const findProductWithQuery = async ({ query, limit, skip }) => {
     .exec(); // Dai dien cho viec su dung async await in Promise
 };
 
+const findProductByProductIds = async ({ productIds }) => {
+  const response = {
+    isExist: true,
+    products: [],
+    productIsNotExist: [],
+  };
+
+  await Promise.all(
+    productIds.map(async (productId) => {
+      if (Types.ObjectId.isValid(productId)) {
+        const product = await _Product.findOne({ _id: productId });
+        if (!product) {
+          response.isExist = false;
+          response.productIsNotExist.push(productId);
+        } else {
+          response.products.push(product);
+        }
+      } else {
+        response.isExist = false;
+        response.productIsNotExist.push(productId);
+      }
+    })
+  );
+
+  return response;
+};
+
 export {
   findAllDraftForShop,
   findAllPublishForShop,
@@ -163,4 +191,5 @@ export {
   getDetailProduct,
   updateProductOfShopForModelProduct,
   updateProductOfShop,
+  findProductByProductIds,
 };

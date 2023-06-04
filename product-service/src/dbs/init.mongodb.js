@@ -1,19 +1,19 @@
-"use strict";
+'use strict';
 
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const connectUri = "mongodb://127.0.0.1:27017/shopDev";
+const connectUri = 'mongodb://127.0.0.1:27017/product-service';
 
 const connectMongoDb = () => {
   // Poolsize: max connection
   mongoose
     .connect(connectUri)
     .then((_) => {
-      console.log("Connect Mongodb Successfully!");
+      console.log('Connect Mongodb Successfully!');
     })
     .catch((err) => {
       console.log(err);
-      console.log("Error Connect Mongodb!");
+      console.log('Error Connect Mongodb!');
     });
 };
 
@@ -23,7 +23,7 @@ class Database {
   }
   connect(type) {
     switch (type) {
-      case "mongodb":
+      case 'mongodb':
         connectMongoDb();
         break;
       default:
@@ -39,5 +39,4 @@ class Database {
   }
 }
 
-const instanceMongDB = Database.getInstance("mongodb");
-export default instanceMongDB;
+export default Database;

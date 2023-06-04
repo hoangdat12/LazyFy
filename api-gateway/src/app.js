@@ -5,7 +5,7 @@ import compression from 'compression';
 import * as dotenv from 'dotenv';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
-import pool from './dbs/init.postgreSQL.js';
+import { Database } from './dbs/init.postgreSQL.js';
 import { InternalServerError } from '../src/core/error.response.js';
 // import KeyTokenRepository from "./pg/repository/keyToken.repository.js";
 import authRoute from './routes/auth.router.js';
@@ -16,14 +16,7 @@ dotenv.config();
 const app = express();
 
 // CONNECT DB
-pool.connect((err) => {
-  if (err) {
-    console.error('Connection error', err.stack);
-    throw new InternalServerError('Connect db error!');
-  } else {
-    console.log('Connected to PostgreSQL server');
-  }
-});
+Database.getInstance('psql');
 
 // MIDDLEWARE
 app.use(morgan('dev'));
@@ -46,7 +39,7 @@ app.use(JwtService.verifyAccessToken);
 app.use(
   '/api/v1/product',
   createProxyMiddleware({
-    target: 'http://localhost:8081/',
+    target: 'http://localhost:8081',
     changeOrigin: true,
     secure: false,
     onProxyReq: (proxyReq, req, res) => {
@@ -57,6 +50,13 @@ app.use(
         proxyReq.setHeader('user', JSON.stringify(req.user));
         proxyReq.setHeader('keyToken', JSON.stringify(req.keyToken));
       }
+      if (req.body) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      }
+      proxyReq.end();
     },
   })
 );

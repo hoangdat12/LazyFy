@@ -1,10 +1,10 @@
-import { BadRequestError, NotFoundError } from "../core/error.response.js";
+import { BadRequestError, NotFoundError } from '../core/error.response.js';
 import {
   findDiscountByCodeAndShopId,
   findAllDiscountCodeUnSelect,
-} from "../models/repositories/discount.repo.js";
-import { findAllProductWithPagination } from "../models/repositories/product.repo.js";
-import _Discount from "../models/discount.model.js";
+} from '../models/repositories/discount.repo.js';
+import { findAllProductWithPagination } from '../models/repositories/product.repo.js';
+import _Discount from '../models/discount.model.js';
 /**
  * Discount Service
  * 1. Generator discount code [Admin | Shop]
@@ -40,16 +40,16 @@ class DiscountService {
     const timeEndDate = new Date(end_date);
 
     if (date < timeStartDate || date > timeEndDate) {
-      throw new BadRequestError("Invalid time start and end for discount!");
+      throw new BadRequestError('Invalid time start and end for discount!');
     }
 
     if (timeStartDate >= timeEndDate)
-      throw new BadRequestError("Time start and end date is not Valid!");
+      throw new BadRequestError('Time start and end date is not Valid!');
 
     const foundDiscount = findDiscountByCodeAndShopId({ code, shopId });
 
     if (foundDiscount && foundDiscount.discount_is_active)
-      throw new BadRequestError("Discount is already exist!");
+      throw new BadRequestError('Discount is already exist!');
 
     const newDiscount = await _Discount.create({
       discount_name: name,
@@ -83,15 +83,15 @@ class DiscountService {
   }) {
     const foundDiscount = findDiscountByCodeAndShopId({ code, shopId });
     if (!foundDiscount || !foundDiscount.is_active)
-      throw new NotFoundError("Discount is not exist!");
+      throw new NotFoundError('Discount is not exist!');
 
     const { discount_applies_to, discount_product_ids } = foundDiscount;
 
-    if (discount_applies_to === "all") {
+    if (discount_applies_to === 'all') {
       const products = await findAllProductWithPagination({
         limit,
         page,
-        sort: "ctime",
+        sort: 'ctime',
         filter: {
           product_shop: shopId,
           isPublished: true,
@@ -102,7 +102,7 @@ class DiscountService {
       return products;
     }
 
-    if (discount_applies_to === "specific") {
+    if (discount_applies_to === 'specific') {
     }
   }
 
@@ -114,7 +114,7 @@ class DiscountService {
         discount_shopId: shopId,
         discount_is_active: true,
       },
-      unSelect: ["__v", "discount_shopId"],
+      unSelect: ['__v', 'discount_shopId'],
       model: _Discount,
     });
 
@@ -128,13 +128,13 @@ class DiscountService {
       !foundDiscount.is_active ||
       !foundDiscount.discount_max_uses
     )
-      throw new NotFoundError("Discount invalid!");
+      throw new NotFoundError('Discount invalid!');
 
     const { discount_start_date, discount_end_date } = foundDiscount;
     const date = new Date();
 
     if (date < new Date(discount_start_date) || new Date(discount_end_date)) {
-      throw new BadRequestError("Invalid time start and end for discount!");
+      throw new BadRequestError('Invalid time start and end for discount!');
     }
 
     const totalOrder = 0;

@@ -1,24 +1,24 @@
-import bcrypt from "bcrypt";
-import crypto from "crypto";
-import Jwt from "jsonwebtoken";
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import Jwt from 'jsonwebtoken';
 
-import KeyTokenService from "./keyToken.service.js";
+import KeyTokenService from './keyToken.service.js';
 import {
   BadRequestError,
   ConflictRequestError,
   AuthFailureError,
   ForbiddenRequestError,
-} from "../core/error.response.js";
-import { OK, CREATED } from "../core/success.response.js";
-import UserRepository from "../pg/repository/user.repository.js";
-import JwtService from "./jwt.service.js";
-import KeyTokenRepository from "../pg/repository/keyToken.repository.js";
+} from '../core/error.response.js';
+import { OK, CREATED } from '../core/success.response.js';
+import UserRepository from '../pg/repository/user.repository.js';
+import JwtService from './jwt.service.js';
+import KeyTokenRepository from '../pg/repository/keyToken.repository.js';
 
 class AuthService {
   static signUp = async ({ fullName, email, password }) => {
     const isExist = await UserRepository.findByEmail({ email });
     if (isExist) {
-      throw new ConflictRequestError("Error: Email is already Exist!");
+      throw new ConflictRequestError('Error: Email is already Exist!');
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = await UserRepository.create({
@@ -28,7 +28,7 @@ class AuthService {
     });
 
     let metadata = null;
-    let message = "";
+    let message = '';
 
     if (newUser) {
       const { privateKey, publicKey } = this.generatePrivatePublicKey();
@@ -52,16 +52,16 @@ class AuthService {
         user: newUser,
         token: accessToken,
       };
-      message = "Create Account Success!";
+      message = 'Create Account Success!';
       return {
         refreshToken,
-        response: new CREATED(message, metadata),
+        response: new CREATED(metadata, message),
       };
     } else {
-      message = "Create Account Failure!";
+      message = 'Create Account Failure!';
       return {
         refreshToken: null,
-        response: new OK(message, metadata),
+        response: new OK(metadata, message),
       };
     }
   };
@@ -69,12 +69,12 @@ class AuthService {
   static login = async ({ email, password }) => {
     const user = await UserRepository.findByEmail({ email });
     if (!user) {
-      throw new BadRequestError("User not register!");
+      throw new BadRequestError('User not register!');
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      throw new AuthFailureError("Authorization Error!");
+      throw new AuthFailureError('Authorization Error!');
     }
 
     const { privateKey, publicKey } = this.generatePrivatePublicKey();
@@ -98,10 +98,10 @@ class AuthService {
       user,
       token: accessToken,
     };
-    const message = "Login success!";
+    const message = 'Login success!';
     return {
       refreshToken,
-      response: new OK(message, metadata),
+      response: new OK(metadata, message),
     };
   };
 
@@ -120,25 +120,25 @@ class AuthService {
     if (foundToken) {
       // Check user use this refresh Token
       const { id, email } = Jwt.verify(token, foundToken.publicKey, {
-        algorithm: "RS256",
+        algorithm: 'RS256',
       });
       console.log(`Refresh Token is used::::userEmail:${email}:::id:${id}"`);
       // Delete All KeyToken
       await KeyTokenRepository.deleteById(foundToken.id);
       throw new ForbiddenRequestError(
-        "Something wrong happend, Please relogin!"
+        'Something wrong happend, Please relogin!'
       );
     }
     const holderToken = await KeyTokenRepository.findByRefershToken({
       refreshToken: token,
     });
-    if (!holderToken) throw new BadRequestError("Invalid Token!");
+    if (!holderToken) throw new BadRequestError('Invalid Token!');
     const { id, email } = Jwt.verify(token, holderToken.public_key, {
-      algorithm: "RS256",
+      algorithm: 'RS256',
     });
 
     const isValidUser = await UserRepository.findById({ userId: id });
-    if (!isValidUser) throw new BadRequestError("User not found!");
+    if (!isValidUser) throw new BadRequestError('User not found!');
 
     const { accessToken, refreshToken } = await JwtService.createTokenPair({
       payload: { id, email },
@@ -249,15 +249,15 @@ class AuthService {
   //   };
 
   static generatePrivatePublicKey = () => {
-    return crypto.generateKeyPairSync("rsa", {
+    return crypto.generateKeyPairSync('rsa', {
       modulusLength: 4096,
       publicKeyEncoding: {
-        type: "pkcs1",
-        format: "pem",
+        type: 'pkcs1',
+        format: 'pem',
       },
       privateKeyEncoding: {
-        type: "pkcs1",
-        format: "pem",
+        type: 'pkcs1',
+        format: 'pem',
       },
     });
   };

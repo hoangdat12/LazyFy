@@ -9,27 +9,27 @@ import { BadRequestError } from '../core/error.response.js';
  */
 
 class Consumer {
-  channel;
+  static channel;
   constructor(queue = 'product_queue') {
     this.queue = queue;
   }
 
   async connection() {
     const conn = await amqp.connect('amqp://localhost:5672');
-    this.channel = await conn.createChannel();
+    Consumer.channel = await conn.createChannel();
   }
 
   async receivedMessage() {
-    if (!this.channel) {
+    if (!Consumer.channel) {
       await this.connection();
     }
-    await this.channel.assertQueue(this.queue, {
+    await Consumer.channel.assertQueue(this.queue, {
       durable: false,
     });
-    this.channel.prefetch(1);
-    this.channel.qos(100);
+    Consumer.channel.prefetch(1);
+    Consumer.channel.qos(100);
     let msgReceived = null;
-    this.channel.consume(
+    Consumer.channel.consume(
       this.queue,
       (msg) => {
         if (msg) {
@@ -47,7 +47,7 @@ class Consumer {
               throw new BadRequestError('Type of Message not valid!');
           }
         }
-        this.channel.ack(msg);
+        Consumer.channel.ack(msg);
       },
       {
         noAck: false,

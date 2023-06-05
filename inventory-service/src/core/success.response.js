@@ -1,18 +1,10 @@
-const StatusCode = {
-  OK: 200,
-  CREATED: 201,
-};
-
-const ReasonStatusCode = {
-  OK: "Success!",
-  CREATED: "Created!",
-};
+import HttpStatusCode from '../ultils/httpStatusCode/index.js';
 
 class SuccessResponse {
   constructor(
-    message = ReasonStatusCode.OK,
+    message = HttpStatusCode.ReasonPhrases.OK,
     metadata = {},
-    statusCode = StatusCode.OK
+    statusCode = HttpStatusCode.StatusCodes.OK
   ) {
     this.message = message;
     this.statusCode = statusCode;
@@ -25,14 +17,23 @@ class SuccessResponse {
 }
 
 class OK extends SuccessResponse {
-  constructor(message = ReasonStatusCode.OK, metadata = {}) {
+  constructor(
+    metadata = {},
+    message = HttpStatusCode.ReasonPhrases.OK,
+    options = {}
+  ) {
     super(message, metadata);
+    this.options = options;
   }
 }
 
 class CREATED extends SuccessResponse {
-  constructor(message = ReasonStatusCode.CREATED, metadata = {}, options = {}) {
-    super(message, metadata);
+  constructor(
+    metadata = {},
+    message = HttpStatusCode.ReasonPhrases.CREATED,
+    options = {}
+  ) {
+    super(message, metadata, 201);
     this.options = options;
   }
 }

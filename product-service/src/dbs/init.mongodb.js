@@ -18,6 +18,7 @@ const connectMongoDb = () => {
 };
 
 class Database {
+  static instance;
   constructor(type) {
     this.connect(type);
   }

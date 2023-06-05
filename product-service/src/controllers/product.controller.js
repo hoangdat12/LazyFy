@@ -15,7 +15,7 @@ class ProductController {
           ...req.body,
         },
       });
-      new CREATED('Create Product Success!', product).send(res);
+      new CREATED(product, 'Create Product Success!').send(res);
     } catch (err) {
       next(err);
     }
@@ -32,10 +32,10 @@ class ProductController {
   static getAllDraftForShop = async (req, res, next) => {
     try {
       new OK(
-        'Get list Draft success!',
         await ProductFactory.findAllDraftForShop({
           product_shop: req.user.id,
-        })
+        }),
+        'Get list Draft success!'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -46,11 +46,11 @@ class ProductController {
   static publishProductForShop = async (req, res, next) => {
     try {
       new OK(
-        'Publish product success!',
         await ProductFactory.publishProduct({
           product_shop: req.user.id,
           productId: req.body.productId,
-        })
+        }),
+        'Publish product success!'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -61,11 +61,11 @@ class ProductController {
   static unPublishProductForShop = async (req, res, next) => {
     try {
       new OK(
-        'UnPublish product success!',
         await ProductFactory.unPublishProduct({
           product_shop: req.user.id,
           productId: req.body.productId,
-        })
+        }),
+        'UnPublish product success!'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -84,10 +84,10 @@ class ProductController {
   static getAllPublishForShop = async (req, res, next) => {
     try {
       new OK(
-        'Get List Publish success!',
         await ProductFactory.findAllPublishForShop({
           product_shop: req.user.id,
-        })
+        }),
+        'Get List Publish success!'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -100,10 +100,10 @@ class ProductController {
       const { q } = req.query;
       const keyword = q.trim();
       new OK(
-        'List product for search!',
         await ProductFactory.searchProductByUser({
           keyword,
-        })
+        }),
+        'List product for search!'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -125,7 +125,7 @@ class ProductController {
         limit,
         sortBy: sort,
       };
-      new OK('Get products success!', data).send(res);
+      new OK(data, 'Get products success!').send(res);
     } catch (err) {
       console.log(err);
       next(err);
@@ -136,8 +136,8 @@ class ProductController {
     try {
       const { productId } = req.params;
       new OK(
-        'Detail product',
-        await ProductFactory.getDetailProduct({ productId })
+        await ProductFactory.getDetailProduct({ productId }),
+        'Detail product'
       ).send(res);
     } catch (err) {
       console.log(err);
@@ -148,7 +148,6 @@ class ProductController {
   static updateProductOfShop = async (req, res, next) => {
     try {
       new OK(
-        'Updated product success!',
         await ProductFactory.updateProduct({
           type: req.body.product_type,
           productId: req.params.productId,
@@ -156,7 +155,8 @@ class ProductController {
             product_shop: req.user.id,
             ...req.body,
           },
-        })
+        }),
+        'Updated product success!'
       ).send(res);
     } catch (err) {
       console.log(err);

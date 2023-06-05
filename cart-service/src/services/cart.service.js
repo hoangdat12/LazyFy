@@ -1,7 +1,4 @@
-import {
-  BadRequestError,
-  InternalServerError,
-} from '../core/error.response.js';
+import { BadRequestError } from '../core/error.response.js';
 import ClientGRPC from '../gRPC/client.gRPC.js';
 import _Cart from '../models/cart.model.js';
 

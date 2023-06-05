@@ -1,5 +1,5 @@
-import { CREATED, OK } from "../core/success.response.js";
-import AuthService from "../services/auth.service.js";
+import { OK } from '../core/success.response.js';
+import AuthService from '../services/auth.service.js';
 
 class AuthController {
   static signUp = async (req, res, next) => {
@@ -35,8 +35,8 @@ class AuthController {
   static logout = async (req, res, next) => {
     try {
       new OK(
-        "Logout success!",
-        await AuthService.logout({ keyTokenId: req.keyToken.id })
+        await AuthService.logout({ keyTokenId: req.keyToken.id }),
+        'Logout success!'
       ).send(res);
     } catch (err) {
       next(err);
@@ -48,10 +48,13 @@ class AuthController {
       const token = req.body.refreshToken;
       const { user, accessToken, refreshToken } =
         await AuthService.refreshToken({ token });
-      new OK("Refresh Token Success!", {
-        user,
-        accessToken,
-      }).send(res);
+      new OK(
+        {
+          user,
+          accessToken,
+        },
+        'Refresh Token Success!'
+      ).send(res);
     } catch (err) {
       next(err);
     }

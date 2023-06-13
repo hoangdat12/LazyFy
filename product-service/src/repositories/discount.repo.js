@@ -1,42 +1,94 @@
-import _Discount from "../../models/discount.model.js";
-import { getUnSelectFromArray } from "../../ultils/index.js";
+import _Discount from '../models/discount.model.js';
+import { getSelectFromArray, getUnSelectFromArray } from '../ultils/index.js';
 
-const findDiscountByCodeAndShopId = async ({ code, shopId }) => {
-  return await _Discount
-    .findOne({
-      discount_code: code,
-      discount_shopId: shopId,
-    })
-    .lean();
-};
+class DiscountRepository {
+  static async findDiscountByCodeAndShopId({ code, shopId }) {
+    return await _Discount
+      .findOne({
+        discount_code: code,
+        discount_shopId: shopId,
+        discount_is_active: true,
+      })
+      .lean();
+  }
 
-const findAllDiscountCodeUnSelect = async ({
-  limit = 50,
-  page = 1,
-  sort = "ctime",
-  filter,
-  unSelect,
-  model,
-}) => {
-  const skip = (page - 1) * limit;
-  const sortBy = sort === "ctime" ? { _id: -1 } : { _id: 1 };
-  const products = await model
-    .find(filter)
-    .skip(skip)
-    .limit(limit)
-    .select(getUnSelectFromArray(unSelect))
-    .sort(sortBy)
-    .lean();
+  static async findAllDiscountCodeUnSelect({
+    limit = 50,
+    page = 1,
+    sort = 'ctime',
+    filter,
+    unSelect,
+    model,
+  }) {
+    const skip = (page - 1) * limit;
+    const sortBy = sort === 'ctime' ? { _id: -1 } : { _id: 1 };
+    const products = await model
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .select(getUnSelectFromArray(unSelect))
+      .sort(sortBy)
+      .lean();
 
-  return products;
-};
+    return products;
+  }
 
-const checkDiscountExists = async (model, filter) => {
-  return await model.findOne(filter).lean();
-};
+  static async checkDiscountExists(model, filter) {
+    return await model.findOne(filter).lean();
+  }
 
-export {
-  findDiscountByCodeAndShopId,
-  findAllDiscountCodeUnSelect,
-  checkDiscountExists,
-};
+  static async findByDiscountCode({ discount_code }) {
+    return await _Discount.findOne({ discount_code, discount_is_active: true });
+  }
+
+  static async findByDiscountId({ discount_id }) {
+    return await _Discount.findOne({
+      _id: discount_id,
+      discount_is_active: true,
+    });
+  }
+
+  static async updateDiscountCode({ discount_code, updatedDiscount }) {
+    return await _Discount.findOneAndUpdate(
+      { discount_code },
+      { ...updatedDiscount },
+      { new: true, upsert: true }
+    );
+  }
+
+  static async findDiscountForProduct({ filter, limit, page, select }) {
+    const currentDate = new Date();
+    console.log(filter);
+    return await _Discount
+      .find({
+        ...filter,
+        discount_is_active: true,
+        discount_start_date: { $lte: currentDate }, // Start date less than or equal to the current date
+        discount_end_date: { $gte: currentDate }, // End date greater than or equal to the current date
+      })
+      .skip((page - 1) * limit)
+      .select(getSelectFromArray(select))
+      .limit(limit)
+      .lean()
+      .exec();
+  }
+
+  static async findDiscountForProductShopId({ shopId, apply, limit, page }) {
+    const currentDate = new Date();
+    return await _Discount
+      .find({
+        discount_shopId: shopId,
+        discount_is_active: true,
+        $in: {
+          discount_product_ids: productId,
+        },
+        discount_start_date: { $lte: currentDate }, // Start date less than or equal to the current date
+        discount_end_date: { $gte: currentDate }, // End date greater than or equal to the current date
+      })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+      .exec();
+  }
+}
+export default DiscountRepository;

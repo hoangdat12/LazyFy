@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package shop;
+
+service Shop {
+  rpc getShopOfDiscount (ShopOfDiscountRequest) returns (ShopOfDiscountResponse) {}
+}
+
+message ShopOfDiscountRequest {
+    string shopId = 1;
+}
+
+message ShopOfDiscountResponse {
+    int32 id = 1;
+    int32  shop_owner = 2;
+    string shop_name = 3;
+}

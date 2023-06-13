@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cors from 'cors';
 import { Database } from './dbs/init.postgreSQL.js';
+import ServerGRPC from './grpc/server.grpc.js';
+import shopRoute from '../src/route/shop.route.js';
 
 const app = express();
 
@@ -24,9 +26,16 @@ app.use(
   })
 );
 
+// ROUTE
+app.use('/api/v1/shop', shopRoute);
+
 // CONNECT
 // 1. DATABASE
 Database.getInstance('psql');
+
+// gRPC
+const serverGRPC = new ServerGRPC();
+serverGRPC.onServer();
 
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;

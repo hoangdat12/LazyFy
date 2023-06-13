@@ -5,8 +5,8 @@ import compression from 'compression';
 import cors from 'cors';
 
 import Database from './dbs/init.mongodb.js';
-import shopRoute from './routers/shop.router.js';
 import productRoute from './routers/product.router.js';
+import discountRoute from './routers/discount.router.js';
 import Consumer from './rabbitMQ/consummer.js';
 import ServerGRPC from './gRPC/server.gRPC.js';
 
@@ -29,20 +29,32 @@ app.use(
   })
 );
 
+function parseJSON(req, res, next) {
+  if (req.headers.user) {
+    try {
+      req.user = JSON.parse(req.headers.user);
+    } catch (err) {
+      return next(new Error('Invalid JSON in user header'));
+    }
+  }
+  next();
+}
+app.use(parseJSON);
+
 // CONNECT
 Database.getInstance('mongodb');
 
 // RabbitMQ
-const consumer = new Consumer();
-await consumer.receivedMessage();
+// const consumer = new Consumer();
+// await consumer.receivedMessage();
 
 // gRPC
-const serverGRPC = new ServerGRPC();
-serverGRPC.onServer();
+// const serverGRPC = new ServerGRPC();
+// serverGRPC.onServer();
 
 // ROUTES
-app.use('/api/v1/product', shopRoute);
 app.use('/api/v1/product', productRoute);
+app.use('/api/v1/discount', discountRoute);
 
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;

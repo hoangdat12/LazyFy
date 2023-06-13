@@ -3,6 +3,10 @@ import { _Product } from '../models/product.model.js';
 import { getSelectFromArray, getUnSelectFromArray } from '../ultils/index.js';
 import { Types } from 'mongoose';
 
+const findProductById = async ({ productId }) => {
+  return await _Product.findOne({ _id: productId }).lean();
+};
+
 const findAllDraftForShop = async ({ query, limit, skip }) => {
   return await findProductWithQuery({ query, limit, skip });
 };
@@ -192,4 +196,5 @@ export {
   updateProductOfShopForModelProduct,
   updateProductOfShop,
   findProductByProductIds,
+  findProductById,
 };

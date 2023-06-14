@@ -2,14 +2,18 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { findProductByProductIds } from '../repositories/product.repo.js';
-import { InternalServerError } from '../core/error.response.js';
+import {
+  findProductByProductIds,
+  findProductByProductId,
+} from '../repositories/product.repo.js';
+import { Types } from 'mongoose';
+import DiscountService from '../services/discount.service.js';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
 
 const packageDefinition = protoLoader.loadSync(
-  currentDirectory + '/product.proto',
+  currentDirectory + '/server.proto',
   {
     keepCase: true,
     longs: String,
@@ -19,13 +23,15 @@ const packageDefinition = protoLoader.loadSync(
   }
 );
 
-const { cart } = grpc.loadPackageDefinition(packageDefinition);
+const product = grpc.loadPackageDefinition(packageDefinition).Product;
 
 class ServerGRPC {
   async onServer() {
     const server = new grpc.Server();
-    server.addService(cart.Cart.service, {
-      checkProduct: this.checkProductIsExistService,
+    server.addService(product.service, {
+      getProduct: this.getProduct,
+      checkMultipleProduct: this.checkMultipleProduct,
+      getDiscountPrice: this.getDiscountPrice,
     });
 
     server.bindAsync(
@@ -42,11 +48,44 @@ class ServerGRPC {
     );
   }
 
-  async checkProductIsExistService(call, callback) {
-    const productIds = call.request.data;
-    console.log('ProductIds received from client:::: ', productIds);
+  async getProduct(call, callback) {
+    const { productId, shopId } = call.request;
+    const response = {
+      product: null,
+    };
+    if (!Types.ObjectId.isValid(productId)) {
+      callback(null, response);
+      return;
+    }
+    const data = await findProductByProductId({ productId, shopId });
+    if (data) {
+      response.product = data;
+    }
+    callback(null, response);
+  }
+
+  async checkMultipleProduct(call, callback) {
+    const productIds = call.request.productIds;
     const data = await findProductByProductIds({ productIds });
     callback(null, data);
+  }
+
+  async getDiscountPrice(call, callback) {
+    const { discountType, discountCode, totalPrice } = call.request;
+    const response = {
+      totalDiscount: 0,
+      message: '',
+    };
+    const data = await DiscountService.getPriceOfDiscount({
+      typePromotion: discountType,
+      totalPrice,
+      code: discountCode,
+    });
+    if (data) {
+      response.totalDiscount = data.totalDiscount;
+      response.message = data.message;
+    }
+    callback(null, response);
   }
 }
 

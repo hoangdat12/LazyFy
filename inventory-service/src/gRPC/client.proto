@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+service Product {
+  rpc getProduct (ProductRequest) returns (ProductResponse) {}
+  rpc checkMultipleProduct (ProductsRequest) returns (ProductsResponse) {}
+}
+
+message Specs {
+  string size = 1;
+  string color = 2;
+}
+
+message ProductDetail {
+  string _id = 1;
+  string product_name = 2;
+  string product_thumb = 3;
+  string product_description = 4;
+  int32 product_price = 5;
+  int32 product_quantity = 6;
+  string product_type = 7;
+  string product_shop = 8;
+  Specs product_attributes = 9;
+  int32 product_ratingAverage = 10;
+  bool isPublished = 11;
+  repeated string product_images = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message ProductRequest {
+  string productId = 1;
+  string shopId = 2;
+}
+
+message ProductResponse {
+  ProductDetail product = 1;
+}
+
+
+message ProductsRequest {
+  repeated string productIds = 1;
+}
+
+message ProductsResponse {
+  bool isExist = 1;
+  repeated ProductDetail products = 2;
+  repeated string productIsNotExist = 3;
+}
+

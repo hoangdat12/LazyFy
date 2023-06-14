@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+service Inventory {
+    rpc checkProductIsStock(InvenProductRequest) returns (InvenProductResponse) {}
+}
+
+message InvenProductRequest {
+    string productId = 1;
+    string shopId = 2;
+    string quantity = 3;
+}
+
+message InvenProductResponse {
+    bool isStock = 1;
+    string message = 2;
+}

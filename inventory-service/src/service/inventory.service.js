@@ -1,20 +1,74 @@
+import { BadRequestError } from '../core/error.response';
+import { ClientGRPC } from '../gRPC/client.gRPC.js';
 import InventoryRepository from '../pg/repository/inventory.repository';
 
-/**
- * interface data {
- *      product_id: string,
- *      inven_shop_id: number,
- *      inven_stock: number
- * }
- */
+const clientGRPC = new ClientGRPC();
+
 class InventoryService {
-  static async createInventoryForProduct({ data }) {
-    const { product_id, inven_shop_id } = data;
+  static async createInventoryForProduct({ productId, shopId }) {
     // Check product of shop valid or not
-    return await InventoryRepository.createInventory({
-      product_id,
-      inven_shop_id,
+    const { product } = clientGRPC.getProduct({
+      productId,
+      shopId,
     });
+
+    if (!product) throw new BadRequestError('Product is not exist!');
+
+    return await InventoryRepository.createInventory({
+      productId,
+      shopId,
+    });
+  }
+
+  static async increQuantityProduct({ productId, shopId, quantity }) {
+    if (quantity < 0) throw new BadRequestError('Quantity must be positive!');
+
+    const { product } = clientGRPC.getProduct({
+      productId,
+      shopId,
+    });
+
+    if (!product) throw new BadRequestError('Product is not exist!');
+
+    return await InventoryRepository.increQuantityProduct({
+      productId,
+      shopId,
+      quantity,
+    });
+  }
+
+  static async increQuantityProduct({ productId, shopId, quantity }) {
+    const { product } = clientGRPC.getProduct({
+      productId,
+      shopId,
+    });
+
+    if (!product) throw new BadRequestError('Product is not exist!');
+
+    return await InventoryRepository.increQuantityProduct({
+      productId,
+      shopId,
+      quantity: -quantity,
+    });
+  }
+
+  static async isStock({ productId, shopId, quantity }) {
+    if (quantity < 0) throw new BadRequestError('Quantity must be positive!');
+
+    const { product } = clientGRPC.getProduct({
+      productId,
+      shopId,
+    });
+
+    if (!product) throw new BadRequestError('Product is not exist!');
+
+    const invenProduct = await InventoryRepository.findByProductIdAndShopId({
+      productId,
+      shopId,
+    });
+    if (!invenProduct) throw new BadRequestError('Error!');
+
+    return invenProduct.inven_stock > quantity;
   }
 }
 

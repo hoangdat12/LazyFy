@@ -185,6 +185,12 @@ const findProductByProductIds = async ({ productIds }) => {
   return response;
 };
 
+const findProductByProductId = async ({ productId, shopId }) => {
+  return await _Product
+    .findOne({ _id: productId, product_shop: shopId, isPublished: true })
+    .lean();
+};
+
 export {
   findAllDraftForShop,
   findAllPublishForShop,
@@ -197,4 +203,5 @@ export {
   updateProductOfShop,
   findProductByProductIds,
   findProductById,
+  findProductByProductId,
 };

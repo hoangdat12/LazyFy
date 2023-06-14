@@ -7,7 +7,7 @@ import { BadRequestError } from '../core/error.response.js';
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
 const packageDefinition = protoLoader.loadSync(
-  currentDirectory + '/product.client.proto',
+  currentDirectory + '/client.proto',
   {
     keepCase: true,
     longs: String,
@@ -20,11 +20,11 @@ const packageDefinition = protoLoader.loadSync(
 const { shop } = grpc.loadPackageDefinition(packageDefinition);
 
 class ClientGRPC {
-  client;
+  clientShop;
 
   connectionGRPC() {
-    this.client = new shop.Shop(
-      'localhost:50051',
+    this.clientShop = new shop.Shop(
+      'localhost:50055',
       grpc.credentials.createInsecure()
     );
   }
@@ -35,7 +35,7 @@ class ClientGRPC {
    * @param type
    */
   async fetchData({ message }) {
-    if (!this.client) {
+    if (!this.clientShop) {
       this.connectionGRPC();
     }
     const data = {
@@ -44,7 +44,7 @@ class ClientGRPC {
     switch (message.type) {
       case 'getShop':
         return new Promise((resolve, reject) => {
-          this.client.getShopOfDiscount(data, (error, response) => {
+          this.clientShop.getShopOfDiscount(data, (error, response) => {
             if (error) {
               console.error('Error:', error);
               reject(error);

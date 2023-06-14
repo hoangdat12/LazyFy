@@ -10,7 +10,7 @@ import {
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
 const packageDefinition = protoLoader.loadSync(
-  currentDirectory + '/cart.proto',
+  currentDirectory + '/client.proto',
   {
     keepCase: true,
     longs: String,
@@ -20,13 +20,13 @@ const packageDefinition = protoLoader.loadSync(
   }
 );
 
-const { cart } = grpc.loadPackageDefinition(packageDefinition);
+const product = grpc.loadPackageDefinition(packageDefinition).Product;
 
 class ClientGRPC {
-  client;
+  clientProduct;
 
   connectionGRPC() {
-    this.client = new cart.Cart(
+    this.clientProduct = new product(
       'localhost:50051',
       grpc.credentials.createInsecure()
     );
@@ -38,7 +38,7 @@ class ClientGRPC {
    * @param type
    */
   async fetchData({ message }) {
-    if (!this.client) {
+    if (!this.clientProduct) {
       this.connectionGRPC();
     }
     const data = {
@@ -46,7 +46,7 @@ class ClientGRPC {
     };
     switch (message.type) {
       case 'check':
-        this.client.checkProduct(data, (error, response) => {
+        this.clientProduct.checkProduct(data, (error, response) => {
           if (error) {
             console.error('Error:', error);
             return;

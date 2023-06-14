@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+
+service Cart {
+    rpc checkCartExist (CheckCartExistRequest) returns (CheckCartExistResponse) {}
+}
+
+message CheckCartExistRequest {
+    string cartId = 1;
+}
+
+message CheckCartExistResponse {
+    string cartId = 1;
+    string userId = 2;
+}

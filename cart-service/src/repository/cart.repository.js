@@ -9,6 +9,10 @@ class CartRepository {
     return await _Cart.findOne({ cart_user_id: userId }).lean();
   }
 
+  static async findById({ cartId }) {
+    return await _Cart.findOne({ _id: cartId }).lean();
+  }
+
   static async updateQuantityOfProductInCart({ userId, product }) {
     const { productId, quantity } = product;
     const query = {

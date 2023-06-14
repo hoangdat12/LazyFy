@@ -149,7 +149,10 @@ class DiscountService {
     });
 
     // Check discount valid or not
-    DiscountService.discountIsValid({ discount: foundDiscount });
+    const response = DiscountService.discountIsValid({
+      discount: foundDiscount,
+    });
+    if (!response.isValid) throw new BadRequestError(response.message);
 
     // Get total Price
     const totalOrder = 0;
@@ -410,15 +413,44 @@ class DiscountService {
   }
 
   static discountIsValid({ discount }) {
-    if (!discount || !discount.is_active || !discount.discount_max_uses)
-      throw new NotFoundError('Discount invalid!');
+    const response = {
+      isValid: true,
+      message: '',
+    };
+    if (!discount) {
+      response.isValid = false;
+      response.message = 'Discount not found!';
+      return response;
+    }
+
+    if (!discount.is_active) {
+      response.isValid = false;
+      response.message = 'Discount not active!';
+      return response;
+    }
+
+    if (!discount.discount_max_uses) {
+      response.isValid = false;
+      response.message = 'The number of discount codes has expired!';
+      return response;
+    }
 
     const { discount_start_date, discount_end_date } = discount;
     const date = new Date();
 
-    if (date < new Date(discount_start_date) || new Date(discount_end_date)) {
-      throw new BadRequestError('Invalid time start and end for discount!');
+    if (date < new Date(discount_start_date)) {
+      response.isValid = false;
+      response.message = 'The discount code is not effect yet!';
+      return response;
     }
+
+    if (date > new Date(discount_end_date)) {
+      response.isValid = false;
+      response.message = 'The discount code is expired!';
+      return response;
+    }
+
+    return response;
   }
 
   static async checkOnwerShop({ userId, shopId }) {
@@ -443,11 +475,34 @@ class DiscountService {
     return totalPrice - value;
   }
 
-  static getPriceOfDiscount({ typePromotion, totalPrice, value }) {
-    return DiscountService.typePromotion[typePromotion]({
-      totalPrice,
-      value,
+  static async getPriceOfDiscount({ typePromotion, totalPrice, code }) {
+    // Check discount is Exist or not
+    const discount = await DiscountRepository.findByDiscountCode({
+      discount_code: code,
     });
+    const response = {
+      totalDiscount: 0,
+      message: 'Discount not found!',
+    };
+    if (!discount) return response;
+
+    // Check discount is valid
+    const res = DiscountService.discountIsValid({
+      discount,
+    });
+    if (!res.isValid) {
+      return {
+        totalDiscount: 0,
+        message: res.message,
+      };
+    } else
+      return {
+        totalDiscount: DiscountService.typePromotion[typePromotion]({
+          totalPrice,
+          value: discount.discount_value,
+        }),
+        message: res.message,
+      };
   }
 }
 

@@ -1,10 +1,9 @@
-import { InternalServerError } from '../core/error.response';
-import { checkProductExist } from '../gRPC/client.gRPC';
+import { InternalServerError } from '../core/error.response.js';
 
 class CartController {
   static testController(req, res) {
     try {
-      checkProductExist(['1', '2']);
+      // checkProductExist(['1', '2']);
     } catch (error) {
       console.log(err);
       throw new InternalServerError('Server Error!');

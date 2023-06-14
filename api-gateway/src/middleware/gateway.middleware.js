@@ -1,6 +1,8 @@
-const gatewayMiddleware = () => {
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+const gatewayMiddleware = ({ target }) => {
   return createProxyMiddleware({
-    target: 'http://localhost:8081',
+    target,
     changeOrigin: true,
     secure: false,
     onProxyReq: (proxyReq, req, res) => {
@@ -21,3 +23,5 @@ const gatewayMiddleware = () => {
     },
   });
 };
+
+export default gatewayMiddleware;

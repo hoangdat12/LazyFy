@@ -6,10 +6,9 @@ import * as dotenv from 'dotenv';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import { Database } from './dbs/init.postgreSQL.js';
-import { InternalServerError } from '../src/core/error.response.js';
-// import KeyTokenRepository from "./pg/repository/keyToken.repository.js";
 import authRoute from './routes/auth.router.js';
 import JwtService from './services/jwt.service.js';
+import gatewayMiddleware from './middleware/gateway.middleware.js';
 
 dotenv.config();
 
@@ -38,107 +37,35 @@ app.use(JwtService.verifyAccessToken);
 // Proxy middleware configuration for the product service
 app.use(
   '/api/v1/product',
-  createProxyMiddleware({
-    target: 'http://localhost:8081',
-    changeOrigin: true,
-    secure: false,
-    onProxyReq: (proxyReq, req, res) => {
-      if (req.user) {
-        // delete accessToken
-        proxyReq.removeHeader('authorization');
-        // set user and keyToken
-        proxyReq.setHeader('user', JSON.stringify(req.user));
-        proxyReq.setHeader('keyToken', JSON.stringify(req.keyToken));
-      }
-      if (req.body) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
-      proxyReq.end();
-    },
-  })
+  gatewayMiddleware({ target: 'http://localhost:8081' })
 );
-
 app.use(
   '/api/v1/discount',
-  createProxyMiddleware({
-    target: 'http://localhost:8081',
-    changeOrigin: true,
-    secure: false,
-    onProxyReq: (proxyReq, req, res) => {
-      if (req.user) {
-        // delete accessToken
-        proxyReq.removeHeader('authorization');
-        // set user and keyToken
-        proxyReq.setHeader('user', JSON.stringify(req.user));
-        proxyReq.setHeader('keyToken', JSON.stringify(req.keyToken));
-      }
-      if (req.body) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
-      proxyReq.end();
-    },
-  })
-);
-
-app.use(
-  '/api/v1/shop',
-  createProxyMiddleware({
-    target: 'http://localhost:8085',
-    changeOrigin: true,
-    secure: false,
-    onProxyReq: (proxyReq, req, res) => {
-      if (req.user) {
-        // delete accessToken
-        proxyReq.removeHeader('authorization');
-        // set user and keyToken
-        proxyReq.setHeader('user', JSON.stringify(req.user));
-        proxyReq.setHeader('keyToken', JSON.stringify(req.keyToken));
-      }
-      if (req.body) {
-        const bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader('Content-Type', 'application/json');
-        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-      }
-      proxyReq.end();
-    },
-  })
+  gatewayMiddleware({ target: 'http://localhost:8081' })
 );
 
 // Proxy middleware configuration for the cart service
-app.use(
-  '/api/v1/cart',
-  createProxyMiddleware({
-    target: 'http://localhost:8002',
-    changeOrigin: true,
-    secure: false,
-  })
-);
+app.use('/api/v1/cart', gatewayMiddleware({ target: 'http://localhost:8082' }));
 
 // Proxy middleware configuration for the order service
 app.use(
   '/api/v1//order',
-  createProxyMiddleware({
-    target: 'http://localhost:8003',
-    changeOrigin: true,
-    secure: false,
-  })
+  gatewayMiddleware({ target: 'http://localhost:8083' })
 );
 
 // Proxy middleware configuration for the inventory service
 app.use(
   '/api/v1/inventory',
-  createProxyMiddleware({
-    target: 'http://localhost:8004',
-    changeOrigin: true,
-    secure: false,
-  })
+  gatewayMiddleware({ target: 'http://localhost:8084' })
+);
+
+// Proxy middleware configuration for the shop service
+app.use('/api/v1/shop', gatewayMiddleware({ target: 'http://localhost:8085' }));
+
+// Proxy middleware configuration for the order service
+app.use(
+  '/api/v1/order',
+  gatewayMiddleware({ target: 'http://localhost:8086' })
 );
 
 app.use((err, req, res, next) => {

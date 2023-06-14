@@ -49,8 +49,8 @@ Database.getInstance('mongodb');
 // await consumer.receivedMessage();
 
 // gRPC
-// const serverGRPC = new ServerGRPC();
-// serverGRPC.onServer();
+const serverGRPC = new ServerGRPC();
+serverGRPC.onServer();
 
 // ROUTES
 app.use('/api/v1/product', productRoute);

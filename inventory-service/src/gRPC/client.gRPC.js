@@ -7,7 +7,7 @@ const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
 
 const packageDefinition = protoLoader.loadSync(
-  currentDirectory + './protofile.proto',
+  currentDirectory + './client.proto',
   {
     keepCase: true,
     longs: String,
@@ -17,5 +17,30 @@ const packageDefinition = protoLoader.loadSync(
   }
 );
 
-const inventoryPackage =
-  grpc.loadPackageDefinition(packageDefinition).inventory;
+const product = grpc.loadPackageDefinition(packageDefinition).Product;
+
+export class ClientGRPC {
+  static client;
+
+  constructor() {
+    if (!ClientGRPC.client) {
+      ClientGRPC.client = new product(
+        'localhost:50051',
+        grpc.credentials.createInsecure()
+      );
+    }
+  }
+
+  async getProduct({ productId, shopId }) {
+    const data = { productId, shopId };
+    return new Promise((resolve, reject) => {
+      ClientGRPC.client.getProduct(data, (error, response) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}

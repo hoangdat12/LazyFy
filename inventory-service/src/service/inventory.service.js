@@ -1,13 +1,13 @@
-import { BadRequestError } from '../core/error.response';
+import { BadRequestError } from '../core/error.response.js';
 import { ClientGRPC } from '../gRPC/client.gRPC.js';
-import InventoryRepository from '../pg/repository/inventory.repository';
+import InventoryRepository from '../pg/repository/inventory.repository.js';
 
 const clientGRPC = new ClientGRPC();
 
 class InventoryService {
   static async createInventoryForProduct({ productId, shopId }) {
     // Check product of shop valid or not
-    const { product } = clientGRPC.getProduct({
+    const { product } = await clientGRPC.getProduct({
       productId,
       shopId,
     });
@@ -37,19 +37,34 @@ class InventoryService {
     });
   }
 
-  static async increQuantityProduct({ productId, shopId, quantity }) {
+  static async decreQuantityProduct({ productId, shopId, quantity }) {
     const { product } = clientGRPC.getProduct({
       productId,
       shopId,
     });
 
-    if (!product) throw new BadRequestError('Product is not exist!');
+    const response = {
+      isSuccess: true,
+      message: '',
+    };
 
-    return await InventoryRepository.increQuantityProduct({
+    if (!product) {
+      response.isSuccess = false;
+      response.message = 'Product not found in Inventory';
+      return response;
+    }
+
+    const invenProduct = await InventoryRepository.increQuantityProduct({
       productId,
       shopId,
       quantity: -quantity,
     });
+
+    if (!invenProduct) {
+      response.isSuccess = false;
+      response.message = 'Product sell out';
+      return response;
+    } else return response;
   }
 
   static async isStock({ productId, shopId, quantity }) {

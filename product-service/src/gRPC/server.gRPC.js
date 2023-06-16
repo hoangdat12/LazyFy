@@ -71,19 +71,21 @@ class ServerGRPC {
   }
 
   async getDiscountPrice(call, callback) {
-    const { discountType, discountCode, totalPrice } = call.request;
+    const { discountCode, totalPrice, productId, userId } = call.request;
     const response = {
       totalDiscount: 0,
       message: '',
     };
     const data = await DiscountService.getPriceOfDiscount({
-      typePromotion: discountType,
       totalPrice,
       code: discountCode,
+      productId,
+      userId,
     });
     if (data) {
       response.totalDiscount = data.totalDiscount;
       response.message = data.message;
+      response.isValid = data.isValid;
     }
     callback(null, response);
   }

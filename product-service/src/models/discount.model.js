@@ -16,7 +16,7 @@ const discountSchema = new Schema(
     discount_end_date: { type: Date, required: true },
     discount_max_uses: { type: Number, required: true }, // Quantity discount applied
     discount_uses_count: { type: Number, required: true, default: 0 }, // Quantity of discount is used
-    discount_users_count: { type: Array, default: [] }, // User is used discount
+    discount_users_used: { type: Array, default: [] }, // User is used discount
     discount_max_uses_per_user: { type: Number, required: true }, // Quantity discount max used for each user
     discount_min_order_value: { type: Number, default: null }, // Minimun order price to use discount
     discount_max_order_value: { type: Number, default: null },

@@ -1,5 +1,6 @@
 import {
   BadRequestError,
+  ConflictRequestError,
   InternalServerError,
   NotFoundError,
 } from '../core/error.response.js';
@@ -10,11 +11,12 @@ import CartRepository from '../repository/cart.repository.js';
  * push then not care that
  */
 
-class CartService {
-  producer = new Producer('product_queue');
-  clientGRPCForProduct = new ClientGRPC('product_queue');
+const clientGRPCForProduct = new ClientGRPC('product_queue');
 
-  async createCartForNewUser({ userId }) {
+class CartService {
+  static async createCartForNewUser({ userId }) {
+    const cartExist = await CartRepository.findByUserId({ userId });
+    if (cartExist) throw new ConflictRequestError(`User's cart is ready eixst`);
     return await CartRepository.createCartOfUser({ userId });
   }
 
@@ -34,7 +36,7 @@ class CartService {
    *    }
    */
 
-  async addProductToCart({ userId, product }) {
+  static async addProductToCart({ userId, product }) {
     const productId = product.productId;
     const cartUserExist = await CartRepository.findOne({
       cart_user_id: userId,
@@ -48,7 +50,7 @@ class CartService {
         type: 'check',
         data: productIds,
       };
-      const res = await this.clientGRPCForProduct.fetchData({ message });
+      const res = await clientGRPCForProduct.fetchData({ message });
       if (!res.isExist) {
         const response = {
           msg: 'Some product is not Exist!',
@@ -79,12 +81,25 @@ class CartService {
     }
   }
 
-  async deleteProductFromCart({ userId, productId }) {
-    const cartUserExist = await CartRepository.findByUserId({ userId });
-    if (!cartUserExist) throw new NotFoundError('User not found!');
+  static async deleteProductFromCart({ userId, productId }) {
+    const productExistInCart = await CartRepository.findProductExist({
+      userId,
+      productId,
+    });
+    if (!productExistInCart) return {};
     const cartUpdated = await CartRepository.deleteProductFromCart({
       userId,
       productId,
+    });
+    return cartUpdated;
+  }
+
+  static async deleteMultiProductFromCart({ userId, productIds }) {
+    const cartUserExist = await CartRepository.findByUserId({ userId });
+    if (!cartUserExist) throw new NotFoundError('User not found!');
+    const cartUpdated = await CartRepository.deleteMultiProductFromCart({
+      userId,
+      productIds,
     });
     if (!cartUpdated) throw new NotFoundError('Product not found in Cart!');
     else return cartUpdated;
@@ -103,7 +118,7 @@ class CartService {
     ]
 
    */
-  async updateQuantity({ userId, item_products }) {
+  static async updateQuantity({ userId, item_products }) {
     // Check product is exist or not
     let productIds = [];
     item_products.map((item) => {
@@ -113,7 +128,7 @@ class CartService {
       type: 'check',
       data: productIds,
     };
-    const res = await this.clientGRPCForProduct.fetchData({ message });
+    const res = await clientGRPCForProduct.fetchData({ message });
     if (!res.isExist) {
       const response = {
         msg: 'Some product is not Exist!',
@@ -142,7 +157,7 @@ class CartService {
     return productUpdated;
   }
 
-  async getProductsInCart({ userId }) {
+  static async getProductsInCart({ userId }) {
     const cartUserExist = await CartRepository.findByUserId({ userId });
     if (!cartUserExist) throw new NotFoundError('User not found!');
     else return cartUserExist;

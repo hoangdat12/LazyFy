@@ -4,10 +4,7 @@ import {
   NotFoundError,
 } from '../core/error.response.js';
 import _Discount from '../models/discount.model.js';
-import {
-  findProductById,
-  findProductByProductIds,
-} from '../repositories/product.repo.js';
+import { findProductByProductIds } from '../repositories/product.repo.js';
 import InventoryDiscountRepository from '../repositories/inventoryDiscount.repo.js';
 import DiscountRepository from '../repositories/discount.repo.js';
 import ClientGRPC from '../gRPC/client.gRPC.js';
@@ -25,7 +22,7 @@ import { RoleUserConstant } from '../constant/ultils.constant.js';
 class DiscountService {
   static typePromotion = {
     percent: DiscountService.getPriceOfDiscountPercent,
-    amount: DiscountService.getPriceOfDiscountAmount,
+    fixed_amount: DiscountService.getPriceOfDiscountAmount,
   };
 
   static async createDiscount({ payload, user }) {
@@ -86,6 +83,10 @@ class DiscountService {
     }
   }
 
+  static async applyDiscount({ discountCodes, userId }) {
+    return await DiscountRepository.applyDiscount({ discountCodes, userId });
+  }
+
   static async getAllDiscountCodeForProduct({
     shopId,
     productId,
@@ -99,6 +100,7 @@ class DiscountService {
     const filterForSpecific = {
       discount_shopId: shopId,
       discount_applies_to: applyTo.SPECIFIC,
+      discount_product_ids: productId,
     };
 
     return await DiscountService.getAllDiscountIsEffective({
@@ -142,48 +144,48 @@ class DiscountService {
     return discounts;
   }
 
-  static async getDiscountAmount({ code, shopId, products }) {
-    const foundDiscount = await DiscountRepository.findDiscountByCodeAndShopId({
-      code,
-      shopId,
-    });
+  // static async getDiscountAmount({ code, shopId, products }) {
+  //   const foundDiscount = await DiscountRepository.findDiscountByCodeAndShopId({
+  //     code,
+  //     shopId,
+  //   });
 
-    // Check discount valid or not
-    const response = DiscountService.discountIsValid({
-      discount: foundDiscount,
-    });
-    if (!response.isValid) throw new BadRequestError(response.message);
+  //   // Check discount valid or not
+  //   const response = DiscountService.discountIsValid({
+  //     discount: foundDiscount,
+  //   });
+  //   if (!response.isValid) throw new BadRequestError(response.message);
 
-    // Get total Price
-    const totalOrder = 0;
-    await Promise.all(
-      products.map(async (product) => {
-        const productDetail = await findProductById({
-          productId: product.productId,
-        });
-        totalOrder += productDetail.price * product.quantity;
-      })
-    );
+  //   // Get total Price
+  //   const totalOrder = 0;
+  //   await Promise.all(
+  //     products.map(async (product) => {
+  //       const productDetail = await findProductById({
+  //         productId: product.productId,
+  //       });
+  //       totalOrder += productDetail.price * product.quantity;
+  //     })
+  //   );
 
-    // Data response
-    const res = {
-      isValid: false,
-      totalPriceDiscount: 0,
-    };
-    // Check condition of discount
-    if (
-      !totalOrder > foundDiscount.discount_max_order_value &&
-      !totalOrder < foundDiscount.discount_min_order_value
-    ) {
-      res.isValid = true;
-      res.totalPriceDiscount = DiscountService.getPriceOfDiscount({
-        typePromotion: foundDiscount.discount_type,
-        totalPrice: totalOrder,
-        value: foundDiscount.discount_value,
-      });
-    }
-    return res;
-  }
+  //   // Data response
+  //   const res = {
+  //     isValid: false,
+  //     totalPriceDiscount: 0,
+  //   };
+  //   // Check condition of discount
+  //   if (
+  //     !totalOrder > foundDiscount.discount_max_order_value &&
+  //     !totalOrder < foundDiscount.discount_min_order_value
+  //   ) {
+  //     res.isValid = true;
+  //     res.totalPriceDiscount = DiscountService.getPriceOfDiscount({
+  //       typePromotion: foundDiscount.discount_type,
+  //       totalPrice: totalOrder,
+  //       value: foundDiscount.discount_value,
+  //     });
+  //   }
+  //   return res;
+  // }
 
   static async saveDiscount({ userId, discount_code }) {
     // Check discount code exist or not
@@ -423,7 +425,7 @@ class DiscountService {
       return response;
     }
 
-    if (!discount.is_active) {
+    if (!discount.discount_is_active) {
       response.isValid = false;
       response.message = 'Discount not active!';
       return response;
@@ -447,6 +449,13 @@ class DiscountService {
     if (date > new Date(discount_end_date)) {
       response.isValid = false;
       response.message = 'The discount code is expired!';
+      return response;
+    }
+
+    if (discount.discount_max_uses - discount.discount_uses_count <= 0) {
+      response.isValid = false;
+      response.message =
+        'Number of uses Discount has expired, please try again with another code!';
       return response;
     }
 
@@ -475,11 +484,13 @@ class DiscountService {
     return totalPrice - value;
   }
 
-  static async getPriceOfDiscount({ typePromotion, totalPrice, code }) {
+  static async getPriceOfDiscount({ totalPrice, code, productId, userId }) {
     // Check discount is Exist or not
     const discount = await DiscountRepository.findByDiscountCode({
       discount_code: code,
+      discount_users_used: { $ne: userId }, // Check if userId is not present in the array
     });
+
     const response = {
       totalDiscount: 0,
       message: 'Discount not found!',
@@ -493,16 +504,29 @@ class DiscountService {
     if (!res.isValid) {
       return {
         totalDiscount: 0,
+        isValid: false,
         message: res.message,
       };
-    } else
-      return {
-        totalDiscount: DiscountService.typePromotion[typePromotion]({
-          totalPrice,
-          value: discount.discount_value,
-        }),
-        message: res.message,
-      };
+    } else if (discount.discount_type === 'specific') {
+      let validPorductDiscount = false;
+      for (let discount_product_id of discount.discount_product_ids) {
+        if (discount_product_id === productId) validPorductDiscount = true;
+      }
+      if (!validPorductDiscount)
+        return {
+          totalDiscount: 0,
+          message:
+            'Discount not use for this product, please select others discount',
+        };
+    }
+    return {
+      totalDiscount: DiscountService.typePromotion[discount.discount_type]({
+        totalPrice,
+        value: discount.discount_value,
+      }),
+      isValid: true,
+      message: res.message,
+    };
   }
 }
 

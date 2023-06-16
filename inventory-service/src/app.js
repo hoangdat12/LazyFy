@@ -3,6 +3,8 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
 import { Database } from './dbs/init.postgreSQL.js';
+import inventoryRoute from './route/inventory.route.js';
+import ServerGRPC from './gRPC/server.gRPC.js';
 
 const app = express();
 
@@ -21,7 +23,12 @@ app.use(
 // CONNECT MONGODB
 Database.getInstance('psql');
 
+// gRPC
+const serverGRPC = new ServerGRPC();
+serverGRPC.onServer();
+
 //ROUTE
+app.use('/api/v1/inventory', inventoryRoute);
 
 // HANDLE ERROR
 app.use((err, req, res, next) => {

@@ -2,6 +2,7 @@ import _Cart from '../models/cart.model.js';
 
 class CartRepository {
   static async createCartOfUser({ userId }) {
+    console.log(userId);
     return await _Cart.create({ cart_user_id: userId });
   }
 
@@ -11,6 +12,13 @@ class CartRepository {
 
   static async findById({ cartId }) {
     return await _Cart.findOne({ _id: cartId }).lean();
+  }
+
+  static async findProductExist({ userId, productId }) {
+    return await _Cart.findOne({
+      userId,
+      'cart_products.productId': productId,
+    });
   }
 
   static async updateQuantityOfProductInCart({ userId, product }) {
@@ -43,6 +51,22 @@ class CartRepository {
     };
     const options = { new: true, upsert: true };
     return await _Cart.findOneAndUpdate(query, updateSet, options);
+  }
+
+  static async deleteMultiProductFromCart({ userId, productIds }) {
+    const query = {
+      cart_user_id: userId,
+      'cart_products.productId': { $in: productIds },
+      state: 'active',
+    };
+    const updateSet = {
+      $pullAll: {
+        'cart_products.productId': { $in: productIds },
+      },
+    };
+    const options = { new: true, upsert: true };
+
+    return await _Cart.updateMany(query, updateSet, options);
   }
 
   static async addProductToCart({ userId, product }) {

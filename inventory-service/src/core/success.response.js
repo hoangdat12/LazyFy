@@ -1,4 +1,4 @@
-import HttpStatusCode from '../ultils/httpStatusCode/index.js';
+import HttpStatusCode from '../utils/httpStatusCode/index.js';
 
 class SuccessResponse {
   constructor(

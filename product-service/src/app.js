@@ -45,8 +45,8 @@ app.use(parseJSON);
 Database.getInstance('mongodb');
 
 // RabbitMQ
-// const consumer = new Consumer();
-// await consumer.receivedMessage();
+const consumer = new Consumer();
+await consumer.receivedMessage();
 
 // gRPC
 const serverGRPC = new ServerGRPC();

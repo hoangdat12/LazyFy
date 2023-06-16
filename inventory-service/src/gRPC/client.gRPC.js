@@ -7,7 +7,7 @@ const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
 
 const packageDefinition = protoLoader.loadSync(
-  currentDirectory + './client.proto',
+  currentDirectory + '/client.proto',
   {
     keepCase: true,
     longs: String,

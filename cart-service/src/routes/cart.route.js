@@ -3,6 +3,6 @@ import CartController from '../controllers/cart.controller.js';
 
 const router = Router();
 
-router.use('/', CartController.testController);
+router.post('/create', CartController.createCartForUser);
 
 export default router;

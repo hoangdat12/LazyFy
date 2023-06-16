@@ -8,7 +8,6 @@ const orderSchema = new Schema(
     order_user_id: {
       type: Number,
       required: true,
-      unique: true,
     },
     order_checkout: {
       type: Object,

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service Inventory {
     rpc checkProductIsStock(InvenProductRequest) returns (InvenProductResponse) {}
+    rpc decreProduct(InvenProductRequest) returns (DecreProductResponse) {}
 }
 
 message InvenProductRequest {
@@ -12,5 +13,10 @@ message InvenProductRequest {
 
 message InvenProductResponse {
     bool isStock = 1;
+    string message = 2;
+}
+
+message DecreProductResponse {
+    bool isSuccess = 1;
     string message = 2;
 }

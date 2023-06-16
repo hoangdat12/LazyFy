@@ -12,6 +12,19 @@ class DiscountRepository {
       .lean();
   }
 
+  static async applyDiscount({ discountCodes, userId }) {
+    const query = {
+      discount_code: { $in: discountCodes }, // Use $in operator to match multiple discount codes
+    };
+    const update = {
+      $push: { discount_users_used: userId },
+      $inc: { discount_uses_count: 1 },
+    };
+    const options = { new: true, upsert: true };
+
+    await _Discount.updateMany(query, update, options);
+  }
+
   static async findAllDiscountCodeUnSelect({
     limit = 50,
     page = 1,
@@ -23,7 +36,7 @@ class DiscountRepository {
     const skip = (page - 1) * limit;
     const sortBy = sort === 'ctime' ? { _id: -1 } : { _id: 1 };
     const products = await model
-      .find(filter)
+      .find({ ...filter, discount_is_active: true })
       .skip(skip)
       .limit(limit)
       .select(getUnSelectFromArray(unSelect))
@@ -34,7 +47,7 @@ class DiscountRepository {
   }
 
   static async checkDiscountExists(model, filter) {
-    return await model.findOne(filter).lean();
+    return await model.findOne({ ...filter, discount_is_active: true }).lean();
   }
 
   static async findByDiscountCode({ discount_code }) {

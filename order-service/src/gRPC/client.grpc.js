@@ -2,7 +2,6 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { BadRequestError } from '../core/error.response.js';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFilePath);
@@ -72,8 +71,8 @@ export class ClientProductGRPC {
     });
   }
 
-  async getDiscountPrice({ totalPrice }) {
-    const data = { totalPrice };
+  async getDiscountPrice({ totalPrice, discountCode, productId, userId }) {
+    const data = { totalPrice, discountCode, productId, userId };
     return new Promise((resolve, reject) => {
       ClientProductGRPC.clientProduct.getDiscountPrice(
         data,
@@ -90,21 +89,37 @@ export class ClientProductGRPC {
 }
 
 export class ClientInventoryGRPC {
-  static clientProduct;
+  static clientInventory;
 
   constructor() {
-    if (!ClientProductGRPC.clientProduct) {
-      ClientProductGRPC.clientProduct = new inventory(
-        'localhost:50051',
+    if (!ClientInventoryGRPC.clientInventory) {
+      ClientInventoryGRPC.clientInventory = new inventory(
+        'localhost:50054',
         grpc.credentials.createInsecure()
       );
     }
   }
 
-  async checkProductIsExist({ productId, shopId, quantity }) {
+  async checkProductIsStock({ productId, shopId, quantity }) {
     const data = { productId, shopId, quantity };
     return new Promise((resolve, reject) => {
-      ClientProductGRPC.clientProduct.checkProductIsStock(
+      ClientInventoryGRPC.clientInventory.checkProductIsStock(
+        data,
+        (error, response) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
+  }
+
+  async decreQuantityProduct({ productId, shopId, quantity }) {
+    const data = { productId, shopId, quantity };
+    return new Promise((resolve, reject) => {
+      ClientInventoryGRPC.clientInventory.decreProduct(
         data,
         (error, response) => {
           if (error) {

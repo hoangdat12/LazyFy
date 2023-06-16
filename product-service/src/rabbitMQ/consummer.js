@@ -1,5 +1,6 @@
 import * as amqp from 'amqplib';
 import { BadRequestError } from '../core/error.response.js';
+import DiscountService from '../services/discount.service.js';
 
 /**
  * Interface IMsg {
@@ -28,16 +29,17 @@ class Consumer {
     });
     Consumer.channel.prefetch(1);
     Consumer.channel.qos(100);
-    let msgReceived = null;
     Consumer.channel.consume(
       this.queue,
-      (msg) => {
+      async (msg) => {
         if (msg) {
-          msgReceived = JSON.parse(msg.content.toString());
-          console.log(msgReceived);
-          switch (msgReceived.type) {
-            case 'check':
-              console.log('Check product is Exist or not!');
+          const { type, data } = JSON.parse(msg.content.toString());
+          switch (type) {
+            case 'applyDiscount':
+              await DiscountService.applyDiscount({
+                discountCodes: data.discountCodes,
+                userId: data.userId,
+              });
               break;
             case 'get':
               console.log('List product:::: ');
@@ -46,8 +48,8 @@ class Consumer {
               console.log('Not valid!');
               throw new BadRequestError('Type of Message not valid!');
           }
+          Consumer.channel.ack(msg);
         }
-        Consumer.channel.ack(msg);
       },
       {
         noAck: false,

@@ -13,6 +13,7 @@ service Product {
 
 service Inventory {
   rpc checkProductIsStock(InvenProductRequest) returns (InvenProductResponse) {}
+  rpc decreProduct(InvenProductRequest) returns (DecreProductResponse) {}
 }
 
 
@@ -67,14 +68,16 @@ message ProductsResponse {
 }
 
 message DiscountPriceRequest {
-  string discountType = 1;
-  string discountCode = 2;
-  int32 totalPrice = 3;
+  string discountCode = 1;
+  int32 totalPrice = 2;
+  string productId = 3;
+  string userId = 4;
 }
 
 message DiscountPriceResponse {
   int32 totalDiscount = 1;
-  string message = 2;
+  bool isValid = 2;
+  string message = 3;
 }
 
 message InvenProductRequest {
@@ -85,5 +88,10 @@ message InvenProductRequest {
 
 message InvenProductResponse {
   bool isStock = 1;
+  string message = 2;
+}
+
+message DecreProductResponse {
+  bool isSuccess = 1;
   string message = 2;
 }

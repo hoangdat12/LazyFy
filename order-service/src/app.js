@@ -41,6 +41,14 @@ function parseJSON(req, res, next) {
 }
 app.use(parseJSON);
 
+// redisClient.on('connect', () => {
+//   console.log('Redis client connected');
+// });
+
+// redisClient.on('error', (err) => {
+//   console.error('Redis connection error:', err);
+// });
+
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;
   return res.status(statusCode).json({

@@ -2,7 +2,7 @@
 
 import mongoose from 'mongoose';
 
-const connectUri = 'mongodb://127.0.0.1:27017/product-service';
+const connectUri = 'mongodb://127.0.0.1:27017/order-service';
 
 const connectMongoDb = () => {
   // Poolsize: max connection

@@ -4,13 +4,25 @@ import AuthService from '../services/auth.service.js';
 class AuthController {
   static signUp = async (req, res, next) => {
     try {
-      const { fullName, email, password } = req.body;
-      const { refreshToken, response } = await AuthService.signUp({
-        fullName,
+      const { firstName, lastName, email, password } = req.body;
+      const response = await AuthService.signUp({
+        firstName,
+        lastName,
         email,
         password,
       });
+      // req.cookies("refreshToken", refreshToken)
       return response.send(res);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  static activeAccount = async (req, res, next) => {
+    try {
+      const token = req.params.token;
+
+      return (await AuthService.activeAccount({ token })).send(res);
     } catch (err) {
       next(err);
     }
@@ -45,7 +57,8 @@ class AuthController {
 
   static refreshToken = async (req, res, next) => {
     try {
-      const token = req.body.refreshToken;
+      // get refresh-token from cookies
+      const token = req.cookies['refresh-token'];
       const { user, accessToken, refreshToken } =
         await AuthService.refreshToken({ token });
       new OK(
@@ -60,10 +73,14 @@ class AuthController {
     }
   };
 
-  static changePasswordWithEmail = async (req, res, next) => {
+  static changePasswordWithMail = async (req, res, next) => {
     try {
       const email = req.user.email;
-      return (await AuthService.changePasswordWithEmail({ email })).send(res);
+      return (
+        await AuthService.changePasswordWithMail({
+          email,
+        })
+      ).send(res);
     } catch (err) {
       next(err);
     }
@@ -71,9 +88,10 @@ class AuthController {
 
   static verifyEmail = async (req, res, next) => {
     try {
-      const email = req.user.email;
-      const otp = req.body.otp;
-      return (await AuthService.verifyEmail({ email, otp })).send(res);
+      const token = req.params.token;
+
+      const isValid = await AuthService.verifyEmail({ token });
+      return new OK({ isValid }).send(res);
     } catch (err) {
       next(err);
     }
@@ -81,15 +99,16 @@ class AuthController {
 
   static changePassword = async (req, res, next) => {
     try {
-      const { codeSecret } = req.params;
-      const email = req.user.email;
-      const { olderPassword, password } = req.body;
+      const user = req.user;
+      const secret = req.params.secret;
+      const { olderPassword, newPassword } = req.body;
+
       return (
         await AuthService.changePassword({
-          email,
+          email: user.email,
           olderPassword,
-          password,
-          codeSecret,
+          newPassword,
+          secret,
         })
       ).send(res);
     } catch (err) {

@@ -3,8 +3,9 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
 import cors from 'cors';
+
 import Database from './dbs/init.database.js';
-import orderRoute from './route/order.route.js';
+import orderRoute from './routes/order.route.js';
 
 const app = express();
 
@@ -40,14 +41,6 @@ function parseJSON(req, res, next) {
   next();
 }
 app.use(parseJSON);
-
-// redisClient.on('connect', () => {
-//   console.log('Redis client connected');
-// });
-
-// redisClient.on('error', (err) => {
-//   console.error('Redis connection error:', err);
-// });
 
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;

@@ -8,62 +8,125 @@ import {
   ConflictRequestError,
   AuthFailureError,
   ForbiddenRequestError,
+  InternalServerError,
 } from '../core/error.response.js';
 import { OK, CREATED } from '../core/success.response.js';
 import UserRepository from '../pg/repository/user.repository.js';
 import JwtService from './jwt.service.js';
 import KeyTokenRepository from '../pg/repository/keyToken.repository.js';
+import OtpRepository from '../pg/repository/otp.repository.js';
+import MailSenderService from './mailSender.service.js';
+import {
+  confirmEmail,
+  activeAccountTemplate,
+} from '../ultils/template/email.template.js';
+import Producer from '../rabbitMQ/producer.js';
+
+const mailSender = new MailSenderService();
+const producerForCart = new Producer('cart_queue');
 
 class AuthService {
-  static signUp = async ({ fullName, email, password }) => {
-    const isExist = await UserRepository.findByEmail({ email });
+  static async signUp({ firstName, lastName, email, password }) {
+    const isExist = await UserRepository.findByEmail({
+      email,
+    });
     if (isExist) {
       throw new ConflictRequestError('Error: Email is already Exist!');
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = await UserRepository.create({
-      fullName,
+      firstName,
+      lastName,
       email,
       password: hashPassword,
     });
-
-    let metadata = null;
-    let message = '';
-
     if (newUser) {
-      const { privateKey, publicKey } = this.generatePrivatePublicKey();
-
-      const { accessToken, refreshToken } = await JwtService.createTokenPair({
-        payload: {
-          id: newUser.id,
-          email: newUser.email,
-        },
-        privateKey,
+      // Create otp
+      const otp = await OtpRepository.createOtp({ email });
+      // Send mail
+      const link = `http://localhost:8080/api/v1/auth/active/account/${otp.token}`;
+      const userName = `${newUser.firstName} ${newUser.lastName}`;
+      const content = activeAccountTemplate(userName, link);
+      await mailSender.sendEmailWithText({
+        recipient: email,
+        subject: 'Change Password',
+        content,
       });
+      console.log('link:: ', link);
+      // Delele older account don't active
+      UserRepository.deleteOlderAccount();
 
-      await KeyTokenService.createKeyToken({
-        userId: newUser.id,
-        publicKey,
-        privateKey,
-        refreshToken,
-      });
+      return new CREATED(
+        `We send email ${email} an account activation link, please follow the instructions to activate your account`,
+        'Success!'
+      );
+    } else throw new InternalServerError('DB error!');
 
-      metadata = {
-        user: newUser,
-        token: accessToken,
-      };
-      message = 'Create Account Success!';
-      return {
-        refreshToken,
-        response: new CREATED(metadata, message),
-      };
-    } else {
-      message = 'Create Account Failure!';
-      return {
-        refreshToken: null,
-        response: new OK(metadata, message),
-      };
-    }
+    // let metadata = null;
+    // let message = '';
+
+    // if (newUser) {
+    //   const { privateKey, publicKey } = this.generatePrivatePublicKey();
+
+    //   const { accessToken, refreshToken } = await JwtService.createTokenPair({
+    //     payload: {
+    //       id: newUser.id,
+    //       email: newUser.email,
+    //     },
+    //     privateKey,
+    //   });
+
+    //   await KeyTokenService.createKeyToken({
+    //     userId: newUser.id,
+    //     publicKey,
+    //     privateKey,
+    //     refreshToken,
+    //   });
+
+    //   metadata = {
+    //     user: newUser,
+    //     token: accessToken,
+    //   };
+    //   message = 'Create Account Success!';
+    //   return {
+    //     refreshToken,
+    //     response: new CREATED(metadata, message),
+    //   };
+    // } else {
+    //   message = 'Create Account Failure!';
+    //   return {
+    //     refreshToken: null,
+    //     response: new OK(metadata, message),
+    //   };
+    // }
+  }
+
+  static activeAccount = async ({ token }) => {
+    const otpExist = await OtpRepository.findByToken({ token });
+    if (!otpExist) throw new BadRequestError('Token not valid!');
+
+    const userExist = await UserRepository.findByEmail({
+      email: otpExist.email,
+      active: 'inactive',
+    });
+    if (!userExist) throw new BadRequestError('User not found!');
+
+    // delete token
+    OtpRepository.deleteOlderOtp();
+    OtpRepository.deleteBySecret({ secret: otpExist.secret });
+
+    // Create cart for user
+    producerForCart.sendMessage({
+      type: 'create',
+      data: {
+        userId: userExist.id,
+      },
+    });
+
+    return new OK(
+      await UserRepository.activeAccount({ email: otpExist.email }),
+      'Active account successfully!'
+    );
   };
 
   static login = async ({ email, password }) => {
@@ -158,95 +221,83 @@ class AuthService {
     };
   };
 
-  //   // Not fixed yet
-  //   static changePasswordWithEmail = async ({ email }) => {
-  //     const userExist = await UserRepository.findByEmail({ email });
-  //     if (!userExist) {
-  //       throw new BadRequestError("email not found!");
-  //     }
-  //     // Create Otp
-  //     const otp = crypto.randomInt(1000000);
-  //     const otpString = otp.toString().padStart(6, "0");
-  //     // Save Otp
-  //     const newOtp = await createOtp({ email, otp: otpString, secret: null });
-  //     console.log(newOtp);
-  //     if (!newOtp) {
-  //       throw new InternalServerError("Db error!");
-  //     }
-  //     // Send Otp to Email
-  //     // sendMail({
-  //     //   email,
-  //     //   content: changePasswordTemplate,
-  //     //   subject: "Verify Email Change Password",
-  //     // });
-  //     const messgae =
-  //       "We have sent a notification to your email for verification, please follow the instructions to change your password.";
-  //     return new OK(messgae);
-  //   };
+  static changePasswordWithMail = async ({ email }) => {
+    const userExist = await UserRepository.findByEmail({ email });
+    if (!userExist) {
+      throw new BadRequestError('Email not found!');
+    }
+    // Create
+    const newOtp = await OtpRepository.createOtp({ email });
+    if (!newOtp) {
+      throw new InternalServerError('Db error!');
+    }
+    // Send Otp to Email
+    const link = `http://localhost:8080/verify/email/${newOtp.token}`;
+    const userName = `${userExist.firstName} ${userExist.lastName}`;
+    const content = confirmEmail(userName, link);
+    await mailSender.sendEmailWithText({
+      recipient: email,
+      subject: 'Change Password',
+      content,
+    });
 
-  //   static verifyEmail = async ({ email, otp }) => {
-  //     // Verify Otp
-  //     // 1. Get Otp from Db
-  //     // 2. Verify
-  //     const otpVerify = await findOtpByEmail({ email });
-  //     if (!otpVerify) {
-  //       throw new BadRequestError("Invalid email!");
-  //     }
-  //     if (otp !== otpVerify.otp) {
-  //       throw new BadRequestError("Invalid otp!");
-  //     }
-  //     // Create Uri
-  //     const token = crypto.randomBytes(10).toString("hex");
-  //     console.log(token);
-  //     const uri = `http://localhost:8080/api/v1/auth/change-password/${token}`;
-  //     // Create secret key
-  //     const query = { email };
-  //     const update = { secret: token };
-  //     await findOneAndUpdateOtp(query, update);
+    return new OK(
+      `We send email ${email} verify email link, please follow the instructions to verify your email`,
+      'Success!'
+    );
+  };
 
-  //     return new OK("Success!", {
-  //       uri,
-  //     });
-  //   };
+  static verifyEmail = async ({ token }) => {
+    const tokenExist = await OtpRepository.findByToken({ token });
+    if (!tokenExist) throw new BadRequestError('Token not valid');
 
-  //   static changePassword = async ({
-  //     email,
-  //     olderPassword,
-  //     password,
-  //     codeSecret,
-  //   }) => {
-  //     // Check code invalid or not
-  //     const otp = await findOtpByEmail({ email });
-  //     if (!otp) {
-  //       throw new BadRequestError("Otp expires!");
-  //     }
-  //     console.log(otp, codeSecret);
-  //     if (otp.secret !== codeSecret) {
-  //       throw new BadRequestError("Request not found!");
-  //     }
+    return true;
+  };
 
-  //     // Check user
-  //     const user = await findUserByEmail({ email });
-  //     if (!user) {
-  //       throw new BadRequestError("Email not register!");
-  //     }
+  static changePassword = async ({
+    email,
+    olderPassword,
+    newPassword,
+    secret,
+  }) => {
+    // Check code invalid or not
+    const otp = await OtpRepository.findBySecret({ secret, email });
+    if (!otp) {
+      throw new BadRequestError('Otp expires!');
+    }
+    if (otp.email !== email)
+      throw new ForbiddenRequestError(
+        'Your not permission to change password!'
+      );
 
-  //     // Check password
-  //     const isValid = await bcrypt.compare(olderPassword, user.password);
-  //     if (!isValid) {
-  //       throw new BadRequestError("Invalid older password!");
-  //     }
-  //     // Change password
-  //     // Error
-  //     const hashPassword = bcrypt.hashSync(password, 10);
-  //     const query = { email: email };
-  //     const update = { password: hashPassword };
-  //     const userUpdate = await findOneAndUpdateUser(query, update);
-  //     if (!userUpdate) {
-  //       throw new InternalServerError("DB error!");
-  //     }
-  //     return new OK("Change password success!");
-  //   };
+    // Check user
+    const user = await UserRepository.findByEmail({ email });
+    if (!user) {
+      throw new BadRequestError('User not found!');
+    }
+
+    // Check password
+    const isValid = await bcrypt.compare(olderPassword, user.password);
+    if (!isValid) {
+      throw new BadRequestError('Invalid older password!');
+    }
+    // Change password
+    // Error
+    const hashPassword = bcrypt.hashSync(newPassword, 10);
+    const userUpdate = await UserRepository.changePassword({
+      email,
+      newPassword: hashPassword,
+    });
+    if (!userUpdate) {
+      throw new InternalServerError('DB error!');
+    }
+
+    // delete otp
+    OtpRepository.deleteBySecret({ secret: otp.secret });
+    OtpRepository.deleteOlderOtp();
+
+    return new OK('Change password success!');
+  };
 
   static generatePrivatePublicKey = () => {
     return crypto.generateKeyPairSync('rsa', {

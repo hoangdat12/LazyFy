@@ -34,11 +34,18 @@ class Consumer {
       this.queue,
       async (msg) => {
         if (msg) {
-          msgReceived = JSON.parse(msg.content.toString());
-          switch (msgReceived.type) {
+          const { type, data } = JSON.parse(msg.content.toString());
+          switch (type) {
+            case 'create':
+              await CartService.createCartForNewUser({ userId: data.userId });
+              break;
+
+            // Delete product after order
             case 'delete':
-              const { userId, cartId } = msgReceived.data;
-              await CartService.deleteProductFromCart({ userId, cartId });
+              await CartService.deleteProductFromCart({
+                userId: data.userId,
+                cartId: data.cartId,
+              });
               break;
             default:
               console.log('Not valid!');

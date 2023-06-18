@@ -1,4 +1,4 @@
-import HttpStatusCode from "../ultils/httpStatusCode/index.js";
+import HttpStatusCode from '../ultils/httpStatusCode/index.js';
 
 class ErrorResponse extends Error {
   constructor(message, status) {

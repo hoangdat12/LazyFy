@@ -10,20 +10,11 @@ import OrderRepository from '../repository/order.repository.js';
 import { Types } from 'mongoose';
 
 /*
-  shop_orders: [
-    {
-      shopId,
-      products: [
-        "1",
-        "2"
-      ],
-      discountOfShop
-    }
-  ]
+  Producer of RabbitMQ
 */
-
 const producerForCart = new Producer('cart_queue');
 const producerForProduct = new Producer('product_queue');
+const producerForInventory = new Producer('inventory_queue');
 
 class OrderService {
   static async order({
@@ -92,6 +83,14 @@ class OrderService {
         },
       });
 
+      // Decrement quantity
+      producerForInventory.sendMessage({
+        type: 'decreQuantity',
+        data: {
+          userId,
+        },
+      });
+
       return newOrder;
     } else throw new InternalServerError('DB error!');
   }
@@ -112,11 +111,13 @@ class OrderService {
     if (order.order_status !== 'pending')
       throw new BadRequestError('Not allowed cancel order!');
 
-    await OrderRepository.cancelOrder({ orderId, userId });
-
     // Increment quantity of Product
+    producerForInventory.sendMessage({
+      type: 'increQuantity',
+      data: order.order_products,
+    });
 
-    // Delete user from discount
+    await OrderRepository.cancelOrder({ orderId, userId });
   }
 }
 

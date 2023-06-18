@@ -3,12 +3,12 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
 import * as dotenv from 'dotenv';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import { Database } from './dbs/init.postgreSQL.js';
 import authRoute from './routes/auth.router.js';
 import JwtService from './services/jwt.service.js';
 import gatewayMiddleware from './middleware/gateway.middleware.js';
+import swaggerDocs from './ultils/swagger/swagger.js';
 
 dotenv.config();
 
@@ -32,7 +32,12 @@ app.use(
 // ROUTE
 app.use('/api/v1/auth', authRoute);
 
+// SWAGGER
+swaggerDocs(app, process.env.PORT);
+
+// MIDDLE WARE
 app.use(JwtService.verifyAccessToken);
+
 // Gateway
 // Proxy middleware configuration for the product service
 app.use(

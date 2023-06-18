@@ -31,7 +31,8 @@ const clientInventoryGRPC = new ClientInventoryGRPC();
 class CheckoutService {
   static async checkoutReview({ cartId, userId, shop_orders, discountApply }) {
     const foundCart = await clientCartGRPC.checkCartExist({ cartId });
-    if (!foundCart) throw new NotFoundError('Cart not found!');
+    if (!foundCart.userId) throw new NotFoundError('Cart not found!');
+    console.log(foundCart);
     if (foundCart.userId !== userId.toString())
       throw new ForbiddenRequestError('User not permission with cart!');
 

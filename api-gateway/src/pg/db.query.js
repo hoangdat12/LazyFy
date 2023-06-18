@@ -5,7 +5,7 @@ export const query = async (command) => {
   return new Promise((resolve, reject) => {
     pool.query(command, (err, res) => {
       if (err) {
-        console.log(err);
+        console.log(err.message);
         reject(new InternalServerError('Query with psql error!'));
       } else {
         resolve(res.rows);

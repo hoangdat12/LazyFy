@@ -157,13 +157,11 @@ class CartService {
     return productUpdated;
   }
 
-  static async getProductsInCart({ userId }) {
+  static async getCart({ userId }) {
     const cartUserExist = await CartRepository.findByUserId({ userId });
     if (!cartUserExist) throw new NotFoundError('User not found!');
     else return cartUserExist;
   }
-
-  async checkOutOrder({}) {}
 }
 
 export default CartService;

@@ -1,7 +1,6 @@
-import { BadRequestError } from "../../core/error.response.js";
-import { query } from "../db.query.js";
+import { query } from '../db.query.js';
 
-const DATABASE_NAME = "key-token";
+const DATABASE_NAME = 'key-token';
 
 class KeyTokenRepository {
   static async updateOrCreate({ userId, publicKey, privateKey, refreshToken }) {
@@ -19,35 +18,6 @@ class KeyTokenRepository {
     };
     const data = await query(queryString);
     return data[0];
-    //   const keyToken = await this.findByUserId({ userId });
-    //   console.log("keyToken:::: ", keyToken);
-    //   const values = [userId, publicKey, privateKey, refreshToken];
-    //   if (!keyToken) {
-    //     const queryString = {
-    //       text: `
-    //           INSERT INTO "${DATABASE_NAME}" (user_id, public_key, private_key, refresh_token)
-    //           VALUES ($1, $2, $3, $4)
-    //       `,
-    //       values,
-    //     };
-    //     const data = await query(queryString);
-    //     console.log("data[0].id::: ", data[0]);
-    //   } else {
-    //     const queryString = {
-    //       text: `
-    //           UPDATE "${DATABASE_NAME}"
-    //           SET public_key = $2,
-    //               private_key = $3,
-    //               refresh_token = $4,
-    //               updated_at = NOW()
-    //           WHERE user_id = $1
-    //       `,
-    //       values,
-    //     };
-    //     const data = await query(queryString);
-    //     console.log("data:::: ", data);
-    //   }
-    // }
   }
 
   static async updateByUserId({ userId, newRefreshToken, olderRefershToken }) {
@@ -58,6 +28,7 @@ class KeyTokenRepository {
         refresh_tokens_used = array_append(refresh_tokens_used, $3),
         updated_at = NOW()
       WHERE user_id = $1
+      RETURNING *;
     `;
     const values = [userId, newRefreshToken, olderRefershToken];
     const data = await query({ text: queryString, values });

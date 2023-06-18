@@ -5,6 +5,7 @@ import compression from 'compression';
 import { Database } from './dbs/init.postgreSQL.js';
 import inventoryRoute from './route/inventory.route.js';
 import ServerGRPC from './gRPC/server.gRPC.js';
+import Consumer from './rabbitMQ/consumer.js';
 
 const app = express();
 
@@ -22,6 +23,10 @@ app.use(
 
 // CONNECT MONGODB
 Database.getInstance('psql');
+
+// RabbitMQ
+const consumer = new Consumer();
+await consumer.receivedMessage();
 
 // gRPC
 const serverGRPC = new ServerGRPC();

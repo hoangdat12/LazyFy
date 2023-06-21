@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+service Auth {
+  rpc verifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {}
+}
+
+message VerifyAccessTokenRequest {
+  string accessToken = 1;
+  string userId = 2;
+} 
+
+message User {
+  string id = 1;
+  string email = 2;
+}
+
+message VerifyAccessTokenResponse {
+  bool isValid = 1;
+  string message = 2;
+  User user = 3;
+}

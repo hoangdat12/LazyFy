@@ -9,6 +9,7 @@ import authRoute from './routes/auth.router.js';
 import JwtService from './services/jwt.service.js';
 import gatewayMiddleware from './middleware/gateway.middleware.js';
 import swaggerDocs from './ultils/swagger/swagger.js';
+import ServerGRPC from './gRPC/server.js';
 
 dotenv.config();
 
@@ -36,7 +37,7 @@ app.use('/api/v1/auth', authRoute);
 swaggerDocs(app, process.env.PORT);
 
 // MIDDLE WARE
-app.use(JwtService.verifyAccessToken);
+// app.use(JwtService.verifyAccessToken);
 
 // Gateway
 // Proxy middleware configuration for the product service
@@ -82,5 +83,9 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal Server Error!',
   });
 });
+
+// gRPC
+const serverGRPC = new ServerGRPC();
+serverGRPC.onServer();
 
 export default app;

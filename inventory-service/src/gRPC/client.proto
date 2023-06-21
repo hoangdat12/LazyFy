@@ -5,6 +5,10 @@ service Product {
   rpc checkMultipleProduct (ProductsRequest) returns (ProductsResponse) {}
 }
 
+service Auth {
+  rpc verifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {}
+}
+
 message Specs {
   string size = 1;
   string color = 2;
@@ -45,5 +49,21 @@ message ProductsResponse {
   bool isExist = 1;
   repeated ProductDetail products = 2;
   repeated string productIsNotExist = 3;
+}
+
+message VerifyAccessTokenRequest {
+  string accessToken = 1;
+  string userId = 2;
+} 
+
+message User {
+  string id = 1;
+  string email = 2;
+}
+
+message VerifyAccessTokenResponse {
+  bool isValid = 1;
+  string message = 2;
+  User user = 3;
 }
 

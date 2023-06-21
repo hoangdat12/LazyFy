@@ -4,7 +4,8 @@ import ProductFactory from '../services/product.service.js';
 class ProductController {
   static createNewProduct = async (req, res, next) => {
     try {
-      const user = req.headers.user;
+      console.log(req.user);
+      const user = req.user;
       const type = req.body.product_type;
 
       const product_shop = user.id;
@@ -31,9 +32,12 @@ class ProductController {
    */
   static getAllDraftForShop = async (req, res, next) => {
     try {
+      const { limit = 20, page = 1 } = req.query;
       new OK(
         await ProductFactory.findAllDraftForShop({
-          product_shop: req.user.id,
+          product_shop: req.params.shopId,
+          limit,
+          page,
         }),
         'Get list Draft success!'
       ).send(res);
@@ -83,9 +87,12 @@ class ProductController {
    */
   static getAllPublishForShop = async (req, res, next) => {
     try {
+      const { limit = 20, page = 1 } = req.query;
       new OK(
         await ProductFactory.findAllPublishForShop({
-          product_shop: req.user.id,
+          product_shop: req.params.shopId,
+          limit,
+          page,
         }),
         'Get List Publish success!'
       ).send(res);

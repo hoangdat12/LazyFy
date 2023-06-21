@@ -20,13 +20,11 @@ class OtpRepository {
   }
 
   static async findByToken({ token }) {
-    console.log(token);
     const queryString = `
         SELECT * FROM "${DATABASE_NAME}"
         WHERE token = '${token}'
     `;
     const data = await query(queryString);
-    console.log('data::: ', data);
     return data[0];
   }
 

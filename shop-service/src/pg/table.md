@@ -9,5 +9,3 @@ shop_evaluate BIGINT DEFAULT 0,
 createdAt TIMESTAMP DEFAULT NOW(),
 updatedAt TIMESTAMP DEFAULT NOW()
 );
-
-<!-- shop_product REFERENCES "shop-product" (id) UNIQUE NOT NULL -->

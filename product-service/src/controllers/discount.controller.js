@@ -180,11 +180,10 @@ class DiscountController {
   */
   static async findDiscountOfUser(req, res, next) {
     try {
-      const user = req.params.userId;
-
+      const user = req.user;
       return new OK(
         await DiscountService.getAllDiscountOfUser({
-          userId: userid,
+          userId: user.id,
         }),
         'Discount of User'
       ).send(res);

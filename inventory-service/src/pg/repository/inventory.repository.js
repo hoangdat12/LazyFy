@@ -32,7 +32,7 @@ class InventoryRepository {
     const queryString = `
       UPDATE "${DATABASE_NAME}"
       SET inven_stock = CASE
-        WHEN (inven_stock - ${quantity}) > 0 THEN (inven_stock - ${quantity})
+        WHEN (inven_stock + ${quantity}) > 0 THEN (inven_stock + ${quantity})
         ELSE inven_stock
       END
       WHERE inven_product_id = '${productId}' AND inven_shop_id = '${shopId}'

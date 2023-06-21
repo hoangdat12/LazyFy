@@ -16,6 +16,9 @@ service Inventory {
   rpc decreProduct(InvenProductRequest) returns (DecreProductResponse) {}
 }
 
+service Auth {
+  rpc verifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {}
+}
 
 message CheckCartExistRequest {
     string cartId = 1;
@@ -94,4 +97,20 @@ message InvenProductResponse {
 message DecreProductResponse {
   bool isSuccess = 1;
   string message = 2;
+}
+
+message VerifyAccessTokenRequest {
+  string accessToken = 1;
+  string userId = 2;
+} 
+
+message User {
+  string id = 1;
+  string email = 2;
+}
+
+message VerifyAccessTokenResponse {
+  bool isValid = 1;
+  string message = 2;
+  User user = 3;
 }

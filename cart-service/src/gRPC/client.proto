@@ -1,47 +1,93 @@
 syntax = "proto3";
 
-
 service Product {
-    rpc checkProduct (ProductRequest) returns (ProductResponse) {}
-    rpc checkProducts (ProductsRequest) returns (ProductsResponse) {}
+  rpc getProduct (ProductRequest) returns (ProductResponse) {}
+  rpc checkMultipleProduct (ProductsRequest) returns (ProductsResponse) {}
+  rpc getDiscountPrice(DiscountPriceRequest) returns (DiscountPriceResponse) {}
 }
+
+service Auth {
+  rpc verifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {}
+}
+
 
 message Specs {
-    string size = 1;
-    string color = 2;
-  }
-  
-message ProductDetail {
-    string product_ratingAverage = 1;
-    repeated string product_variation = 2;
-    repeated string product_images = 3;
-    string _id = 4;
-    string code = 5;
-    string name = 6;
-    string author = 7;
-    string description = 8;
-    repeated string type = 9;
-    string image_url = 10;
-    float price = 11;
-    bool active = 12;
-    int32 purchases = 13;
-    Specs specs = 14;
+  string size = 1;
+  string color = 2;
 }
-  
+
+message ProductDetail {
+  string _id = 1;
+  string product_name = 2;
+  string product_thumb = 3;
+  string product_description = 4;
+  int32 product_price = 5;
+  int32 product_quantity = 6;
+  string product_type = 7;
+  string product_shop = 8;
+  Specs product_attributes = 9;
+  int32 product_ratingAverage = 10;
+  bool isPublished = 11;
+  repeated string product_images = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
 message ProductRequest {
   string productId = 1;
+  string shopId = 2;
 }
 
 message ProductResponse {
   ProductDetail product = 1;
 }
 
+
 message ProductsRequest {
-    repeated string productIds = 1;
+  repeated string productIds = 1;
 }
-  
+
 message ProductsResponse {
-    bool isExist = 1;
-    repeated ProductDetail products = 2;
-    repeated string productIsNotExist = 3;
+  bool isExist = 1;
+  repeated ProductDetail products = 2;
+  repeated string productIsNotExist = 3;
+}
+
+message DiscountPriceRequest {
+  string discountCode = 1;
+  int32 totalPrice = 2;
+  string productId = 3;
+  string userId = 4;
+}
+
+message DiscountPriceResponse {
+  int32 totalDiscount = 1;
+  bool isValid = 2;
+  string message = 3;
+}
+
+message ShopOfDiscountRequest {
+  string shopId = 1;
+}
+
+message ShopOfDiscountResponse {
+int32 id = 1;
+int32  shop_owner = 2;
+string shop_name = 3;
+}
+
+message VerifyAccessTokenRequest {
+string accessToken = 1;
+string userId = 2;
+} 
+
+message User {
+string id = 1;
+string email = 2;
+}
+
+message VerifyAccessTokenResponse {
+bool isValid = 1;
+string message = 2;
+User user = 3;
 }

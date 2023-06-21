@@ -4,7 +4,7 @@
 
 /**
  * @swagger
- * /checkout:
+ * /api/v1/order/checkout:
  *   post:
  *     summary: Perform checkout review
  *     description: Retrieves the review of the checkout process, including order details and pricing information.
@@ -77,7 +77,7 @@
 */
 /**
  * @swagger
- * /:
+ * /api/v1/order/:
  *   post:
  *     summary: Place a new order
  *     description: Creates a new order based on the provided user, cart, and order details.
@@ -139,4 +139,109 @@
  *                 updatedAt: "2023-06-17T09:17:10.220Z"
  *                 __v: 0
  *               options: {}
+ */
+
+/**
+ * @swagger
+ * /api/v1/order/:
+ *   delete:
+ *     summary: Cancel order
+ *     description: Cancel an order by its ID.
+ *     tags:
+ *       - Order
+ *     parameters:
+ *       - in: header
+ *         name: authorization
+ *         description: Access token for authentication
+ *         required: true
+ *       - in: header
+ *         name: x-client-id
+ *         description: User's ID
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               orderId:
+ *                 type: string
+ *                 description: Order ID
+ *             example:
+ *               orderId: "123456"
+ *     responses:
+ *       '200':
+ *         description: Order cancellation successful.
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Cancel order successfully!"
+ *               data: {}
+ *       '500':
+ *         description: Internal server error. An error occurred while canceling the order.
+ */
+
+/**
+ * @swagger
+ * /api/v1/order/{orderId}:
+ *   get:
+ *     summary: View order
+ *     description: Retrieve the details of a specific order.
+ *     tags:
+ *       - Order
+ *     parameters:
+ *       - in: path
+ *         name: secret
+ *         description: Secret for password change
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: header
+ *         name: authorization
+ *         description: Access token for authentication
+ *         required: true
+ *       - in: header
+ *         name: x-client-id
+ *         description: User's ID
+ *         required: true
+ *     responses:
+ *       '200':
+ *         description: Order details retrieved successfully.
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Order detail"
+ *               data: {}
+ *       '500':
+ *         description: Internal server error. An error occurred while retrieving the order details.
+ */
+
+/**
+ * @swagger
+ * /api/v1/order/all/:
+ *   get:
+ *     summary: View all orders
+ *     description: Retrieve all orders of the user.
+ *     tags:
+ *       - Order
+ *     parameters:
+ *       - in: header
+ *         name: authorization
+ *         description: Access token for authentication
+ *         required: true
+ *       - in: header
+ *         name: x-client-id
+ *         description: User's ID
+ *         required: true
+ *     responses:
+ *       '200':
+ *         description: Orders retrieved successfully.
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "All order of user"
+ *               data: []
+ *       '500':
+ *         description: Internal server error. An error occurred while retrieving the orders.
  */

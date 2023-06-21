@@ -36,24 +36,22 @@ class CartService {
    *    }
    */
 
-  static async addProductToCart({ userId, product }) {
-    const productId = product.productId;
-    const cartUserExist = await CartRepository.findOne({
+  static async addProductToCart({ userId, productId, quantity }) {
+    const cartUserExist = await CartRepository.findProductExist({
       cart_user_id: userId,
       'cart_products.productId': productId,
     });
     if (!cartUserExist) {
       // Check product is exist or not
-      let productIds = [productId];
+      // let productIds = [productId];
       let cartUpdated = null;
-      const message = {
-        type: 'check',
-        data: productIds,
-      };
-      const res = await clientGRPCForProduct.fetchData({ message });
-      if (!res.isExist) {
+      const { product } = await clientGRPCForProduct.getProduct({
+        productId,
+        shopId: userId,
+      });
+      if (!product) {
         const response = {
-          msg: 'Some product is not Exist!',
+          msg: 'Product is not Exist!',
           productIsNotExist: res.productIsNotExist,
         };
         return new BadRequestError(response);
@@ -63,8 +61,8 @@ class CartService {
         userId,
         product: {
           productId,
-          shopId: product.shopId,
-          quantity: product.quantity,
+          product_shop: product.product_shop,
+          quantity: quantity,
         },
       });
       if (!cartUpdated) throw new InternalServerError('DB error!');
@@ -74,7 +72,8 @@ class CartService {
     if (cartUserExist) {
       cartUpdated = await CartRepository.updateQuantityOfProductInCart({
         userId,
-        product,
+        productId,
+        quantity,
       });
       if (!cartUpdated) throw new InternalServerError('DB error');
       return cartUpdated;
@@ -94,67 +93,84 @@ class CartService {
     return cartUpdated;
   }
 
-  static async deleteMultiProductFromCart({ userId, productIds }) {
+  // static async deleteMultiProductFromCart({ userId, productIds }) {
+  //   const cartUserExist = await CartRepository.findByUserId({ userId });
+  //   if (!cartUserExist) throw new NotFoundError('User not found!');
+  //   const cartUpdated = await CartRepository.deleteMultiProductFromCart({
+  //     userId,
+  //     productIds,
+  //   });
+  //   if (!cartUpdated) throw new NotFoundError('Product not found in Cart!');
+  //   else return true;
+  // }
+
+  static async deleteMultiProduct({ userId, productIds }) {
     const cartUserExist = await CartRepository.findByUserId({ userId });
-    if (!cartUserExist) throw new NotFoundError('User not found!');
-    const cartUpdated = await CartRepository.deleteMultiProductFromCart({
-      userId,
-      productIds,
-    });
-    if (!cartUpdated) throw new NotFoundError('Product not found in Cart!');
-    else return cartUpdated;
+    if (!cartUserExist) {
+      throw new NotFoundError('User not found!');
+    }
+
+    const deletionPromises = productIds.map((productId) =>
+      this.deleteProductFromCart({ userId, productId })
+    );
+    await Promise.all(deletionPromises);
+
+    return true;
   }
 
   // update cart
   /**
-    item_products: [
+    item_product: 
       {
         productId,
         shopId,
         price,
-        quantity,
+        new_quantity,
         older_quantity
       }
-    ]
-
    */
-  static async updateQuantity({ userId, item_products }) {
-    // Check product is exist or not
-    let productIds = [];
-    item_products.map((item) => {
-      productIds.push(item?.productId);
+  static async updateQuantity({ userId, item_product }) {
+    const { productId, shopId, new_quantity, older_quantity } = item_product;
+
+    const cartUserExist = await CartRepository.findProductExist({
+      userId,
+      productId,
     });
-    const message = {
-      type: 'check',
-      data: productIds,
-    };
-    const res = await clientGRPCForProduct.fetchData({ message });
-    if (!res.isExist) {
+    if (!cartUserExist) throw new BadRequestError('Product not found in Cart!');
+
+    // Check product is exist or not
+    const { product } = await clientGRPCForProduct.getProduct({
+      productId,
+      shopId,
+    });
+    if (!product) {
       const response = {
-        msg: 'Some product is not Exist!',
+        msg: 'Product is not Exist!',
         productIsNotExist: res.productIsNotExist,
       };
       return new BadRequestError(response);
     }
+
     // Update quantity of product
-    let productUpdated = [];
-    await Promise.all(
-      item_products.map(async (item) => {
-        const itemUpdated = await CartRepository.updateQuantityOfProductInCart({
-          userId,
-          product: item,
-        });
-        // If quantity after update equal 0 then delete from cart
-        if (item.older_quantity - item.quantity === 0) {
-          await CartRepository.deleteProductFromCart({
-            userId,
-            productId: itemUpdated._id,
-          });
-        }
-        productUpdated.push(itemUpdated);
-      })
-    );
-    return productUpdated;
+
+    /*
+      If new quantity less or equal 0 then remove it from cart 
+      Else then update quantity
+    */
+    let updateCart = null;
+    if (new_quantity <= 0) {
+      updateCart = await CartRepository.deleteProductFromCart({
+        userId,
+        productId,
+      });
+    } else {
+      updateCart = await CartRepository.updateQuantityOfProductInCart({
+        userId,
+        productId,
+        quantity: new_quantity - older_quantity,
+      });
+    }
+    return updateCart;
   }
 
   static async getCart({ userId }) {

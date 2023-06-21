@@ -19,6 +19,7 @@ const packageDefinition = protoLoader.loadSync(
 const cart = grpc.loadPackageDefinition(packageDefinition).Cart;
 const product = grpc.loadPackageDefinition(packageDefinition).Product;
 const inventory = grpc.loadPackageDefinition(packageDefinition).Inventory;
+const auth = grpc.loadPackageDefinition(packageDefinition).Auth;
 
 export class ClientCartGRPC {
   static clientCart;
@@ -123,6 +124,36 @@ export class ClientInventoryGRPC {
         data,
         (error, response) => {
           if (error) {
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
+  }
+}
+
+export class ClientGRPCForUser {
+  static clientAuth;
+
+  constructor() {
+    if (!ClientGRPCForUser.clientAuth) {
+      ClientGRPCForUser.clientAuth = new auth(
+        'localhost:50050',
+        grpc.credentials.createInsecure()
+      );
+    }
+  }
+
+  async verifyAccessToken({ accessToken, userId }) {
+    const data = { accessToken, userId };
+    return new Promise((resolve, reject) => {
+      ClientGRPCForUser.clientAuth.verifyAccessToken(
+        data,
+        (error, response) => {
+          if (error) {
+            console.log(error);
             reject(error);
           } else {
             resolve(response);

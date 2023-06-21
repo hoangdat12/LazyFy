@@ -17,23 +17,19 @@ const packageDefinition = protoLoader.loadSync(
   }
 );
 
-const { shop } = grpc.loadPackageDefinition(packageDefinition);
+const shop = grpc.loadPackageDefinition(packageDefinition).Shop;
+const auth = grpc.loadPackageDefinition(packageDefinition).Auth;
 
 class ClientGRPC {
   clientShop;
 
   connectionGRPC() {
-    this.clientShop = new shop.Shop(
+    this.clientShop = new shop(
       'localhost:50055',
       grpc.credentials.createInsecure()
     );
   }
 
-  /**
-   *
-   * @param message
-   * @param type
-   */
   async fetchData({ message }) {
     if (!this.clientShop) {
       this.connectionGRPC();
@@ -58,6 +54,36 @@ class ClientGRPC {
       default:
         throw new BadRequestError('Type not found!');
     }
+  }
+}
+
+export class ClientGRPCForUser {
+  static clientAuth;
+
+  constructor() {
+    if (!ClientGRPCForUser.clientAuth) {
+      ClientGRPCForUser.clientAuth = new auth(
+        'localhost:50050',
+        grpc.credentials.createInsecure()
+      );
+    }
+  }
+
+  async verifyAccessToken({ accessToken, userId }) {
+    const data = { accessToken, userId };
+    return new Promise((resolve, reject) => {
+      ClientGRPCForUser.clientAuth.verifyAccessToken(
+        data,
+        (error, response) => {
+          if (error) {
+            console.log(error);
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
   }
 }
 

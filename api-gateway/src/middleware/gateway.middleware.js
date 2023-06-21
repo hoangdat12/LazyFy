@@ -1,4 +1,7 @@
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import {
+  createProxyMiddleware,
+  responseInterceptor,
+} from 'http-proxy-middleware';
 
 const gatewayMiddleware = ({ target }) => {
   return createProxyMiddleware({
@@ -6,13 +9,6 @@ const gatewayMiddleware = ({ target }) => {
     changeOrigin: true,
     secure: false,
     onProxyReq: (proxyReq, req, res) => {
-      if (req.user) {
-        // delete accessToken
-        proxyReq.removeHeader('authorization');
-        // set user and keyToken
-        proxyReq.setHeader('user', JSON.stringify(req.user));
-        proxyReq.setHeader('keyToken', JSON.stringify(req.keyToken));
-      }
       if (req.body) {
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader('Content-Type', 'application/json');
@@ -20,6 +16,16 @@ const gatewayMiddleware = ({ target }) => {
         proxyReq.write(bodyData);
       }
       proxyReq.end();
+    },
+    on: {
+      proxyRes: responseInterceptor(
+        async (responseBuffer, proxyRes, req, res) => {
+          // log complete response
+          const response = responseBuffer.toString('utf8');
+          console.log(response);
+          return responseBuffer;
+        }
+      ),
     },
   });
 };

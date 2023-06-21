@@ -14,7 +14,6 @@ class InventoryService {
       productId,
       shopId,
     });
-
     const isExist = await InventoryRepository.findByProductIdAndShopId({
       productId,
       shopId,
@@ -33,11 +32,10 @@ class InventoryService {
   static async increQuantityProduct({ productId, shopId, quantity }) {
     if (quantity < 0) throw new BadRequestError('Quantity must be positive!');
 
-    const { product } = clientGRPC.getProduct({
+    const { product } = await clientGRPC.getProduct({
       productId,
       shopId,
     });
-
     if (!product) throw new BadRequestError('Product is not exist!');
 
     return await InventoryRepository.increQuantityProduct({
@@ -50,11 +48,10 @@ class InventoryService {
   static async isStock({ productId, shopId, quantity }) {
     if (quantity < 0) throw new BadRequestError('Quantity must be positive!');
 
-    const { product } = clientGRPC.getProduct({
+    const { product } = await clientGRPC.getProduct({
       productId,
       shopId,
     });
-
     if (!product) throw new BadRequestError('Product is not exist!');
 
     const invenProduct = await InventoryRepository.findByProductIdAndShopId({

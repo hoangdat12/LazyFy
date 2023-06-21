@@ -18,7 +18,7 @@ class InventoryController {
     try {
       const { productId, shopId, quantity } = req.body;
       return new OK(
-        await InventoryService.createInventoryForProduct({
+        await InventoryService.increQuantityProduct({
           productId,
           shopId,
           quantity,

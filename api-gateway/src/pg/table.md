@@ -32,7 +32,7 @@
   secret TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
-  FOREIGN KEY (email) REFERENCES "users" (email)
+  FOREIGN KEY (email) REFERENCES "users" (email) ON DELETE CASCADE
   );
 
 - CREATE TABLE address (

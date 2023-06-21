@@ -47,7 +47,6 @@ class OrderService {
       validAcquireProduct.push(keyLock ? true : false);
       if (keyLock) await releaseLock({ key: keyLock });
     }
-
     if (validAcquireProduct.includes(false)) {
       throw new BadRequestError(
         'Some products were updated, please back to your cart!'
@@ -87,18 +86,12 @@ class OrderService {
       producerForInventory.sendMessage({
         type: 'decreQuantity',
         data: {
-          userId,
+          shop_orders,
         },
       });
 
       return newOrder;
     } else throw new InternalServerError('DB error!');
-  }
-
-  static async viewOrder({ userId, orderId }) {
-    if (!Types.ObjectId.isValid(orderId))
-      throw new NotFoundError('Order not found');
-    return await OrderInventory.findByIdAndUserId({ orderId, userId });
   }
 
   static async cancelOrder({ orderId, userId }) {
@@ -118,6 +111,16 @@ class OrderService {
     });
 
     await OrderRepository.cancelOrder({ orderId, userId });
+  }
+
+  static async viewOrder({ userId, orderId }) {
+    if (!Types.ObjectId.isValid(orderId))
+      throw new NotFoundError('Order not found');
+    return await OrderRepository.findByIdAndUserId({ orderId, userId });
+  }
+
+  static async viewAllOrder({ userId }) {
+    return await OrderRepository.findAllByUserId({ userId });
   }
 }
 

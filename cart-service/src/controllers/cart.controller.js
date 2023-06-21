@@ -1,4 +1,3 @@
-import { InternalServerError } from '../core/error.response.js';
 import { OK } from '../core/success.response.js';
 import CartService from '../services/cart.service.js';
 
@@ -18,9 +17,13 @@ class CartController {
   static async addProductToCart(req, res, next) {
     try {
       const user = req.user;
-      const { product } = req.body;
+      const { productId, quantity } = req.body;
       return new OK(
-        await CartService.addProductToCart({ userId: user.id, product }),
+        await CartService.addProductToCart({
+          userId: user.id.toString(),
+          productId,
+          quantity,
+        }),
         'Add cart success!'
       ).send(res);
     } catch (err) {
@@ -31,7 +34,7 @@ class CartController {
   static async deleteProductFromCart(req, res, next) {
     try {
       const user = req.user;
-      const productId = req.params;
+      const productId = req.params.productId;
       return new OK(
         await CartService.deleteProductFromCart({ userId: user.id, productId }),
         'Delete product from cart success!'
@@ -46,7 +49,7 @@ class CartController {
       const user = req.user;
       const { productIds } = req.body;
       return new OK(
-        await CartService.deleteMultiProductFromCart({
+        await CartService.deleteMultiProduct({
           userId: user.id,
           productIds,
         }),
@@ -60,9 +63,9 @@ class CartController {
   static async updateQuantity(req, res, next) {
     try {
       const user = req.user;
-      const { item_products } = req.body;
+      const { item_product } = req.body;
       return new OK(
-        await CartService.updateQuantity({ userId: user.id, item_products }),
+        await CartService.updateQuantity({ userId: user.id, item_product }),
         'Update cart success!'
       ).send(res);
     } catch (err) {

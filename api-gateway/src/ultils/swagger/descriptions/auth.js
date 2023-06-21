@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Create a new account
  *     description: Creates a new user account with the provided details.
@@ -10,12 +10,12 @@
  *       required: true
  *       content:
  *         application/json:
- *           example:
- *             firstName: "firstName"
- *             lastName: "lastName"
- *             email: "test12@gmail.com"
- *             password: "123456"
- *             rePassword: "123456"
+ *           schema:
+ *             example:
+ *               firstName: "firstName"
+ *               lastName: "lastName"
+ *               email: "test12@gmail.com"
+ *               password: "123456"
  *     responses:
  *       201:
  *         description: Account creation successful. Returns the newly created user details and token.
@@ -24,13 +24,13 @@
  *             example:
  *               message: "Create Account Success!"
  *               statusCode: 201
- *               metadata:
- *                 "String message"
+ *               metadata: "String message"
+ *
  */
 
 /**
  * @swagger
- * /active/account/{token}:
+ * /api/v1/auth/active/account/{token}:
  *   get:
  *     summary: Activate user account
  *     description: Activates a user account using a token.
@@ -48,7 +48,7 @@
 
 /**
  * @swagger
- * /login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: User login
  *     description: Authenticates a user with the provided email and password.
@@ -58,9 +58,10 @@
  *       required: true
  *       content:
  *         application/json:
- *           example:
- *             email: "test1@gmail.com"
- *             password: "123456"
+ *           schema:
+ *             example:
+ *               email: "test1@gmail.com"
+ *               password: "123456"
  *     responses:
  *       200:
  *         description: Login successful. Returns the user details and token.
@@ -90,7 +91,7 @@
 
 /**
  * @swagger
- * /logout:
+ * /api/v1/auth/logout:
  *   post:
  *     summary: Logout Account
  *     description: Logout a user account using a token.
@@ -120,7 +121,7 @@
 
 /**
  * @swagger
- * /refresh-token:
+ * /api/v1/auth/refresh-token:
  *   post:
  *     summary: Refresh access token
  *     description: Refreshes the access token using the refresh token stored in the cookie.
@@ -155,7 +156,7 @@
 
 /**
  * @swagger
- * /change/password:
+ * /api/v1/auth/change/password:
  *   patch:
  *     summary: Change password
  *     description: Received email to verify user's email and after handle change password
@@ -166,10 +167,14 @@
  *         name: authorization
  *         description: Access token for authentication
  *         required: true
+ *         schema:
+ *           type: string
  *       - in: header
  *         name: x-client-id
  *         description: User's ID
  *         required: true
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Send mail success for user who wants to change password
@@ -182,9 +187,10 @@
  *                 "message"
  *               options: {}
  */
+
 /**
  * @swagger
- * /verify/email/{token}:
+ * /api/v1/auth/verify/email/{token}:
  *   get:
  *     summary: Verify user's email
  *     description: Verifies user's email using the provided token and handles redirection.
@@ -212,7 +218,7 @@
 
 /**
  * @swagger
- * /change/password/{secret}:
+ * /api/v1/auth/change/password/{secret}:
  *   patch:
  *     summary: Change password
  *     description: Changes user's password using the provided secret and authentication.
@@ -237,9 +243,10 @@
  *       required: true
  *       content:
  *         application/json:
- *           example:
- *             olderPassword: "olderPassword"
- *             newPassword: "newPassword"
+ *           schema:
+ *             example:
+ *               olderPassword: "olderPassword"
+ *               newPassword: "newPassword"
  *     responses:
  *       '200':
  *         content:
@@ -248,6 +255,6 @@
  *               message: "Success!"
  *               statusCode: 200
  *               metadata:
- *                 {isValid: boolean}
+ *                 { message: "Change message successfully!" }
  *               options: {}
  */

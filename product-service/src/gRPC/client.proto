@@ -1,9 +1,12 @@
 syntax = "proto3";
 
-package shop;
 
 service Shop {
   rpc getShopOfDiscount (ShopOfDiscountRequest) returns (ShopOfDiscountResponse) {}
+}
+
+service Auth {
+  rpc verifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {}
 }
 
 message ShopOfDiscountRequest {
@@ -14,4 +17,20 @@ message ShopOfDiscountResponse {
   int32 id = 1;
   int32  shop_owner = 2;
   string shop_name = 3;
+}
+
+message VerifyAccessTokenRequest {
+  string accessToken = 1;
+  string userId = 2;
+} 
+
+message User {
+  string id = 1;
+  string email = 2;
+}
+
+message VerifyAccessTokenResponse {
+  bool isValid = 1;
+  string message = 2;
+  User user = 3;
 }

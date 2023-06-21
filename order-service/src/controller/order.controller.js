@@ -32,7 +32,56 @@ class CartController {
           shop_orders,
           discountApply,
         }),
-        'Checkout'
+        'Order successfully!'
+      ).send(res);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  }
+
+  static async cancelOrder(req, res, next) {
+    try {
+      const user = req.user;
+      const { orderId } = req.body;
+      return new OK(
+        await OrderService.cancelOrder({
+          userId: user.id,
+          orderId,
+        }),
+        'Cancel order successfully!'
+      ).send(res);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  }
+
+  static async viewOrder(req, res, next) {
+    try {
+      const user = req.user;
+      const { orderId } = req.params.orderId;
+      return new OK(
+        await OrderService.viewOrder({
+          userId: user.id,
+          orderId,
+        }),
+        'Order detail'
+      ).send(res);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  }
+
+  static async viewAllOrder(req, res, next) {
+    try {
+      const user = req.user;
+      return new OK(
+        await OrderService.viewAllOrder({
+          userId: user.id,
+        }),
+        'All order of user'
       ).send(res);
     } catch (err) {
       console.log(err);

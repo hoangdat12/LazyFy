@@ -52,7 +52,6 @@ class AuthService {
         subject: 'Change Password',
         content,
       });
-      console.log('link:: ', link);
       // Delele older account don't active
       UserRepository.deleteOlderAccount();
 

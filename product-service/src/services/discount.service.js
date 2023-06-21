@@ -257,7 +257,7 @@ class DiscountService {
     // Disable discount
     foundDiscount.discount_is_active = false;
     await foundDiscount.save();
-    return { message: 'disable success!' };
+    return { message: 'Disable discount successfully!' };
   }
 
   static async modifyDiscountCode({

@@ -32,12 +32,10 @@ class KeyTokenRepository {
     `;
     const values = [userId, newRefreshToken, olderRefershToken];
     const data = await query({ text: queryString, values });
-    console.log(data);
     return data[0];
   }
 
   static async findByUserId({ userId }) {
-    console.log(userId);
     const queryString = `
         SELECT * FROM "${DATABASE_NAME}"
         WHERE user_id = '${userId}'

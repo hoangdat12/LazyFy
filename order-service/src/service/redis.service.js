@@ -35,6 +35,7 @@ export const acquireLock = async ({ productId, quantity, shopId }) => {
   const expireTime = 3000;
   for (let i = 0; i < retryTime; i++) {
     const result = await redisClient.setNX(key, expireTime.toString());
+    console.log('Result::: ', result);
     if (result === 1 || result === true) {
       const response = await clientInventoryGRPC.checkProductIsStock({
         productId,

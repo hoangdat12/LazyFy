@@ -18,6 +18,7 @@ const packageDefinition = protoLoader.loadSync(
 );
 
 const product = grpc.loadPackageDefinition(packageDefinition).Product;
+const auth = grpc.loadPackageDefinition(packageDefinition).Auth;
 
 export class ClientGRPC {
   static client;
@@ -41,6 +42,36 @@ export class ClientGRPC {
           resolve(response);
         }
       });
+    });
+  }
+}
+
+export class ClientGRPCForUser {
+  static clientAuth;
+
+  constructor() {
+    if (!ClientGRPCForUser.clientAuth) {
+      ClientGRPCForUser.clientAuth = new auth(
+        'localhost:50050',
+        grpc.credentials.createInsecure()
+      );
+    }
+  }
+
+  async verifyAccessToken({ accessToken, userId }) {
+    const data = { accessToken, userId };
+    return new Promise((resolve, reject) => {
+      ClientGRPCForUser.clientAuth.verifyAccessToken(
+        data,
+        (error, response) => {
+          if (error) {
+            console.log(error);
+            reject(error);
+          } else {
+            resolve(response);
+          }
+        }
+      );
     });
   }
 }

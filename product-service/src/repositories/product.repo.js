@@ -7,12 +7,12 @@ const findProductById = async ({ productId }) => {
   return await _Product.findOne({ _id: productId }).lean();
 };
 
-const findAllDraftForShop = async ({ query, limit, skip }) => {
-  return await findProductWithQuery({ query, limit, skip });
+const findAllDraftForShop = async ({ query, limit, page }) => {
+  return await findProductWithQuery({ query, limit, page });
 };
 
-const findAllPublishForShop = async ({ query, limit, skip }) => {
-  return await findProductWithQuery({ query, limit, skip });
+const findAllPublishForShop = async ({ query, limit, page }) => {
+  return await findProductWithQuery({ query, limit, page });
 };
 
 const publishProduct = async ({ query }) => {
@@ -147,12 +147,12 @@ const updateProductOfShop = async ({ productId, updated, model }) => {
   return productUpdate;
 };
 
-const findProductWithQuery = async ({ query, limit, skip }) => {
+const findProductWithQuery = async ({ query, limit, page }) => {
   return await _Product
     .find(query)
     .populate('product_shop', 'name')
     .sort({ updatedAt: -1 })
-    .skip(skip)
+    .skip((page - 1) * limit)
     .limit(limit)
     .lean()
     .exec(); // Dai dien cho viec su dung async await in Promise

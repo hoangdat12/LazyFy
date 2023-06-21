@@ -30,14 +30,13 @@ class Consumer {
       async (msg) => {
         if (msg) {
           const { type, data } = JSON.parse(msg.content.toString());
-          console.log('rabbitMQ received Products::: ', data);
           switch (type) {
             case 'decreQuantity':
-              await changeQuantity({ products: data, type: 'decre' });
+              await changeQuantity({ data, type: 'decre' });
               break;
 
             case 'increQuantity':
-              await changeQuantity({ products: data });
+              await changeQuantity({ data });
               break;
 
             default:
@@ -54,32 +53,36 @@ class Consumer {
   }
 }
 
-const changeQuantity = async ({ products, type = 'incre' }) => {
-  // Create an array to store the updates
-  const updates = [];
-  // Collect the updates in the loop
-  for (let product of products) {
-    const { productId, shopId, quantity } = product;
-    const isStock = await InventoryService.isStock({
-      productId,
-      shopId,
-      quantity,
-    });
-    if (!isStock) throw new BadRequestError('Product sell out!');
-    updates.push({
-      productId,
-      shopId,
-      quantity: type === 'incre' ? quantity : -quantity,
-    });
+const changeQuantity = async ({ data, type = 'incre' }) => {
+  for (let order of data.shop_orders) {
+    // Create an array to store the updates
+    const updates = [];
+    const { shopId, products } = order;
+    console.log(order);
+    // Collect the updates in the loop
+    for (let product of products) {
+      const { productId, quantity } = product;
+      const isStock = await InventoryService.isStock({
+        productId,
+        shopId,
+        quantity,
+      });
+      if (!isStock) throw new BadRequestError('Product sell out!');
+      updates.push({
+        productId,
+        shopId,
+        quantity: type === 'incre' ? quantity : -quantity,
+      });
+    }
+
+    // Batch update the inventory
+    const updatePromises = updates.map((update) =>
+      InventoryRepository.increQuantityProduct(update)
+    );
+
+    // Await all update promises
+    await Promise.all(updatePromises);
   }
-
-  // Batch update the inventory
-  const updatePromises = updates.map((update) =>
-    InventoryRepository.increQuantityProduct(update)
-  );
-
-  // Await all update promises
-  await Promise.all(updatePromises);
 };
 
 export default Consumer;

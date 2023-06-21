@@ -35,26 +35,26 @@ class ProductFactory {
     return new productClass(payload).createProduct();
   }
 
-  static async findAllDraftForShop({ product_shop, limit = 50, skip = 0 }) {
+  static async findAllDraftForShop({ product_shop, limit = 50, page = 1 }) {
     const query = {
-      product_shop,
+      product_shop: product_shop.toString(),
       isDraft: true,
     };
-    return await findAllDraftForShop({ query, limit, skip });
+    return await findAllDraftForShop({ query, limit, page });
   }
 
-  static async findAllPublishForShop({ product_shop, limit = 50, skip = 0 }) {
+  static async findAllPublishForShop({ product_shop, limit = 50, page = 0 }) {
     const query = {
-      product_shop,
+      product_shop: product_shop.toString(),
       isDraft: false,
       isPublished: true,
     };
-    return await findAllPublishForShop({ query, limit, skip });
+    return await findAllPublishForShop({ query, limit, page });
   }
 
   static async publishProduct({ product_shop, productId }) {
     const query = {
-      product_shop,
+      product_shop: product_shop.toString(),
       _id: productId,
     };
     return await publishProduct({ query });
@@ -62,7 +62,7 @@ class ProductFactory {
 
   static async unPublishProduct({ product_shop, productId }) {
     const query = {
-      product_shop,
+      product_shop: product_shop.toString(),
       _id: productId,
     };
     return await unPublishProduct({ query });

@@ -2,7 +2,6 @@ import _Cart from '../models/cart.model.js';
 
 class CartRepository {
   static async createCartOfUser({ userId }) {
-    console.log(userId);
     return await _Cart.create({ cart_user_id: userId });
   }
 
@@ -16,17 +15,16 @@ class CartRepository {
 
   static async findProductExist({ userId, productId }) {
     return await _Cart.findOne({
-      userId,
+      cart_user_id: userId,
       'cart_products.productId': productId,
     });
   }
 
-  static async updateQuantityOfProductInCart({ userId, product }) {
-    const { productId, quantity } = product;
+  static async updateQuantityOfProductInCart({ userId, productId, quantity }) {
     const query = {
       cart_user_id: userId,
       'cart_products.productId': productId,
-      state: 'active',
+      cart_state: 'active',
     };
     const updateSet = {
       $inc: {
@@ -42,37 +40,39 @@ class CartRepository {
     const query = {
       cart_user_id: userId,
       'cart_products.productId': productId,
-      state: 'active',
+      cart_state: 'active',
     };
     const updateSet = {
-      $pullAll: {
-        'cart_products.productId': productId,
+      $pull: {
+        cart_products: { productId },
+      },
+      $inc: {
+        cart_count_products: -1,
       },
     };
     const options = { new: true, upsert: true };
     return await _Cart.findOneAndUpdate(query, updateSet, options);
   }
 
-  static async deleteMultiProductFromCart({ userId, productIds }) {
-    const query = {
-      cart_user_id: userId,
-      'cart_products.productId': { $in: productIds },
-      state: 'active',
-    };
-    const updateSet = {
-      $pullAll: {
-        'cart_products.productId': { $in: productIds },
-      },
-    };
-    const options = { new: true, upsert: true };
+  // static async deleteMultiProductFromCart({ userId, productIds }) {
+  //   const query = {
+  //     cart_user_id: userId,
+  //     cart_state: 'active',
+  //   };
+  //   const updateSet = {
+  //     $pull: {
+  //       cart_products: { productId: { $in: productIds } },
+  //     },
+  //   };
+  //   const options = { new: true, upsert: true };
 
-    return await _Cart.updateMany(query, updateSet, options);
-  }
+  //   return await _Cart.updateMany(query, updateSet, options);
+  // }
 
   static async addProductToCart({ userId, product }) {
     const query = {
       cart_user_id: userId,
-      state: 'active',
+      cart_state: 'active',
     };
     const updateSet = {
       $push: {
@@ -84,21 +84,6 @@ class CartRepository {
     };
     const options = { new: true, upsert: true };
     return await _Cart.findOneAndUpdate(query, updateSet, options);
-  }
-
-  static async deleteProductFromCart({ userId, productId }) {
-    const query = {
-      cart_user_id: userId,
-      state: 'active',
-      'product.cart_products.productId': productId,
-    };
-    const updated = {
-      $pullAll: {
-        'product.cart_products.productId': productId,
-      },
-    };
-    const options = { new: true, upsert: true };
-    return await _Cart.findOneAndUpdate(query, updated, options);
   }
 }
 
